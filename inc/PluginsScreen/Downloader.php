@@ -1,8 +1,9 @@
 <?php
 namespace WPDevAssist\PluginsScreen;
 
-use WPDevAssist\ActionQuery;
-use WPDevAssist\Notice;
+use WPDevAssist\OmgCore\ActionQuery;
+use WPDevAssist\OmgCore\AdminNotice;
+use WPDevAssist\OmgCore\OmgFeature;
 use ZipArchive;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
@@ -10,66 +11,76 @@ use const WPDevAssist\KEY;
 
 defined( 'ABSPATH' ) || exit;
 
-class Downloader {
+class Downloader extends OmgFeature {
 	protected const DOWNLOAD_QUERY_KEY = KEY . '_download_plugin';
 
-	public function __construct() {
-		if ( ! static::is_available() ) {
+	protected ActionQuery $action_query;
+	protected AdminNotice $admin_notice;
+
+	public function __construct( ActionQuery $action_query, AdminNotice $admin_notice ) {
+		parent::__construct();
+
+		$this->action_query = $action_query;
+		$this->admin_notice = $admin_notice;
+
+		if ( ! $this->is_available() ) {
 			return;
 		}
 
-		ActionQuery::add( static::DOWNLOAD_QUERY_KEY, array( $this, 'handle_download' ) );
+		$action_query->add( static::DOWNLOAD_QUERY_KEY, $this->handle_download() );
 	}
 
-	public static function is_available(): bool {
+	public function is_available(): bool {
 		return class_exists( 'ZipArchive' );
 	}
 
-	public static function get_url( string $plugin_file ): string {
-		return ActionQuery::get_url(
+	public function get_url( string $plugin_file ): string {
+		return $this->action_query->get_url(
 			static::DOWNLOAD_QUERY_KEY,
 			get_admin_url( null, 'plugins.php' ),
 			$plugin_file
 		);
 	}
 
-	public function handle_download( array $data ): void {
-		$plugin_file = sanitize_text_field( wp_unslash( $data[ static::DOWNLOAD_QUERY_KEY ] ) );
-		$plugin_dir  = WP_PLUGIN_DIR . '/' . dirname( $plugin_file );
-		$zip_file    = sys_get_temp_dir() . '/' . dirname( $plugin_file ) . '.zip';
-		$zip         = new ZipArchive();
+	protected function handle_download(): callable {
+		return function ( array $data ): void {
+			$plugin_file = sanitize_text_field( wp_unslash( $data[ static::DOWNLOAD_QUERY_KEY ] ) );
+			$plugin_dir  = WP_PLUGIN_DIR . '/' . dirname( $plugin_file );
+			$zip_file    = sys_get_temp_dir() . '/' . dirname( $plugin_file ) . '.zip';
+			$zip         = new ZipArchive();
 
-		if ( is_int( $zip->open( $zip_file, ZipArchive::CREATE ) ) ) {
-			Notice::add_transient( __( 'Failed to download plugin', 'development-assistant' ), 'error' );
+			if ( is_int( $zip->open( $zip_file, ZipArchive::CREATE ) ) ) {
+				$this->admin_notice->add_transient( __( 'Failed to download plugin', 'development-assistant' ), 'error' );
 
-			return;
-		}
-
-		$files = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator( $plugin_dir ),
-			RecursiveIteratorIterator::LEAVES_ONLY
-		);
-
-		foreach ( $files as $file ) {
-			if ( $file->isDir() ) {
-				continue;
+				return;
 			}
 
-			$file_path     = $file->getRealPath();
-			$relative_path = substr( $file_path, strlen( $plugin_dir ) + 1 );
+			$files = new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator( $plugin_dir ),
+				RecursiveIteratorIterator::LEAVES_ONLY
+			);
 
-			$zip->addFile( $file_path, $relative_path );
-		}
+			foreach ( $files as $file ) {
+				if ( $file->isDir() ) {
+					continue;
+				}
 
-		$zip->close();
+				$file_path     = $file->getRealPath();
+				$relative_path = substr( $file_path, strlen( $plugin_dir ) + 1 );
 
-		header( 'Content-Type: application/zip' );
-		header( 'Content-Disposition: attachment; filename="' . basename( $zip_file ) . '"' );
-		header( 'Content-Length: ' . filesize( $zip_file ) );
-		flush();
-		readfile( $zip_file ); // phpcs:ignore
-		unlink( $zip_file );
+				$zip->addFile( $file_path, $relative_path );
+			}
 
-		exit;
+			$zip->close();
+
+			header( 'Content-Type: application/zip' );
+			header( 'Content-Disposition: attachment; filename="' . basename( $zip_file ) . '"' );
+			header( 'Content-Length: ' . filesize( $zip_file ) );
+			flush();
+			readfile( $zip_file ); // phpcs:ignore
+			unlink( $zip_file ); // phpcs:ignore
+
+			exit;
+		};
 	}
 }

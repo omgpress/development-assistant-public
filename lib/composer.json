@@ -1,0 +1,11 @@
+{
+  "autoload": {
+    "classmap": [
+      "../inc/",
+      "./vendor/"
+    ],
+    "psr-4": {
+      "WPDevAssist\\": "../inc/"
+    }
+  }
+}

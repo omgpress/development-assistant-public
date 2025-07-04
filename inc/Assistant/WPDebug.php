@@ -1,14 +1,16 @@
 <?php
 namespace WPDevAssist\Assistant;
 
-use WPDevAssist\ActionQuery;
 use WPDevAssist\Htaccess;
+use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\Setting;
 use WPDevAssist\Setting\DebugLog;
 
 defined( 'ABSPATH' ) || exit;
 
 class WPDebug extends Section {
+	protected ActionQuery $action_query;
+	protected DebugLog $debug_log;
 	protected array $checked_constants = array();
 	protected bool $is_dev_env;
 	protected bool $is_debug_log_exists;
@@ -18,10 +20,12 @@ class WPDebug extends Section {
 	protected string $log_enabled;
 	protected string $display_enabled;
 
-	public function __construct() {
+	public function __construct( ActionQuery $action_query, DebugLog $debug_log, Htaccess $htaccess ) {
+		$this->action_query                     = $action_query;
+		$this->debug_log                        = $debug_log;
 		$this->is_dev_env                       = 'yes' === get_option( Setting\DevEnv::ENABLE_KEY, Setting\DevEnv::ENABLE_DEFAULT );
-		$this->is_debug_log_exists              = DebugLog::is_file_exists();
-		$this->is_htaccess_exists               = Htaccess::exists();
+		$this->is_debug_log_exists              = $debug_log->is_file_exists();
+		$this->is_htaccess_exists               = $htaccess->exists();
 		$this->is_disabled_direct_access_to_log = 'yes' === get_option( Setting::DISABLE_DIRECT_ACCESS_TO_LOG_KEY, Setting::DISABLE_DIRECT_ACCESS_TO_LOG_DEFAULT );
 		$this->debug_enabled                    = get_option( Setting::ENABLE_WP_DEBUG_KEY, Setting::ENABLE_WP_DEBUG_DEFAULT );
 		$this->log_enabled                      = get_option( Setting::ENABLE_WP_DEBUG_LOG_KEY, Setting::ENABLE_WP_DEBUG_LOG_DEFAULT );
@@ -74,7 +78,7 @@ class WPDebug extends Section {
 			if ( $this->is_debug_log_exists ) {
 				if ( $this->is_disabled_direct_access_to_log ) {
 					$this->content .= '<br>' . __( 'The <code>debug.log</code> file still exists, but it is protected from direct access, so don\'t worry.', 'development-assistant' );
-				} else {
+				} else { // phpcs:ignore
 					if ( $this->is_htaccess_exists ) {
 						$this->content .= '<br><b>' . __( 'But <code>debug.log</code> file still exists, it\'s important to delete it or disable direct access.', 'development-assistant' ) . '</b>';
 					} else {
@@ -106,14 +110,14 @@ class WPDebug extends Section {
 		if ( $this->is_debug_log_exists ) {
 			$this->controls[] = new Control(
 				__( 'Go to <code>debug.log</code>', 'development-assistant' ),
-				DebugLog::get_page_url()
+				$this->debug_log->get_page_url()
 			);
 		}
 
 		if ( ! $this->is_dev_env && 'yes' === $this->display_enabled ) {
 			$this->controls[] = new Control(
 				__( 'Disable <code>WP_DEBUG_DISPLAY</code>', 'development-assistant' ),
-				ActionQuery::get_url( Setting::DISABLE_DEBUG_DISPLAY_QUERY_KEY ),
+				$this->action_query->get_url( Setting::DISABLE_DEBUG_DISPLAY_QUERY_KEY ),
 			);
 		}
 
@@ -123,13 +127,13 @@ class WPDebug extends Section {
 		) {
 			$this->controls[] = new Control(
 				__( 'Disable debug mode', 'development-assistant' ),
-				ActionQuery::get_url( Setting::TOGGLE_DEBUG_MODE_QUERY_KEY, null, 'no' ),
+				$this->action_query->get_url( Setting::TOGGLE_DEBUG_MODE_QUERY_KEY, null, 'no' ),
 				__( 'Are you sure to disable debug mode?', 'development-assistant' )
 			);
 		} else {
 			$this->controls[] = new Control(
 				__( 'Enable debug mode', 'development-assistant' ),
-				ActionQuery::get_url( Setting::TOGGLE_DEBUG_MODE_QUERY_KEY ),
+				$this->action_query->get_url( Setting::TOGGLE_DEBUG_MODE_QUERY_KEY ),
 				__( 'Are you sure to enable debug mode?', 'development-assistant' )
 			);
 		}
@@ -140,7 +144,7 @@ class WPDebug extends Section {
 		) {
 			$this->controls[] = new Control(
 				__( 'Disable direct access to <code>debug.log</code>', 'development-assistant' ),
-				ActionQuery::get_url( Setting::DISABLE_DIRECT_ACCESS_TO_LOG_QUERY_KEY ),
+				$this->action_query->get_url( Setting::DISABLE_DIRECT_ACCESS_TO_LOG_QUERY_KEY ),
 			);
 		}
 
@@ -150,8 +154,8 @@ class WPDebug extends Section {
 		) {
 			$this->controls[] = new Control(
 				__( 'Delete log file', 'development-assistant' ),
-				ActionQuery::get_url( DebugLog::DELETE_LOG_QUERY_KEY ),
-				DebugLog::get_deletion_confirmation_massage()
+				$this->action_query->get_url( DebugLog::DELETE_LOG_QUERY_KEY ),
+				$this->debug_log->get_deletion_confirmation_massage()
 			);
 		}
 	}
@@ -181,7 +185,7 @@ class WPDebug extends Section {
 				}
 				$this->status_description = __( 'Enabled', 'development-assistant' );
 			}
-		} else {
+		} else { // phpcs:ignore
 			if ( $this->is_debug_log_exists && ! $this->is_disabled_direct_access_to_log ) {
 				$this->status_level       = 'error';
 				$this->status_description = __( 'Disabled, but logs exists', 'development-assistant' );

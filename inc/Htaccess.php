@@ -1,30 +1,41 @@
 <?php
 namespace WPDevAssist;
 
+use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Fs;
+
 defined( 'ABSPATH' ) || exit;
 
-class Htaccess {
+class Htaccess extends OmgFeature {
 	protected const PATH = ABSPATH . '.htaccess';
 
-	public static function exists(): bool {
+	protected Fs $fs;
+
+	public function __construct( Fs $fs ) {
+		parent::__construct();
+
+		$this->fs = $fs;
+	}
+
+	public function exists(): bool {
 		return file_exists( static::PATH );
 	}
 
-	public static function replace( string $marker, string $content ): bool {
-		if ( ! static::exists() ) {
+	public function replace( string $marker, string $content ): bool {
+		if ( ! $this->exists() ) {
 			return false;
 		}
 
-		$file_content = Fs::read( static::PATH );
+		$file_content = $this->fs->read( static::PATH );
 
 		if ( ! $file_content ) {
 			return false;
 		}
 
-		$pattern = static::get_pattern( $marker );
+		$pattern = $this->get_pattern( $marker );
 
 		if ( ! empty( $content ) ) {
-			$content = static::get_pattern( $marker, $content );
+			$content = $this->get_pattern( $marker, $content );
 		}
 
 		if ( preg_match( $pattern, $file_content ) ) {
@@ -35,14 +46,14 @@ class Htaccess {
 			return $file_content;
 		}
 
-		return Fs::write( static::PATH, $file_content, 0644 );
+		return $this->fs->write( static::PATH, $file_content, 0644 );
 	}
 
-	public static function remove( string $marker ): bool {
-		return static::replace( $marker, '' );
+	public function remove( string $marker ): bool {
+		return $this->replace( $marker, '' );
 	}
 
-	protected static function get_pattern( string $marker, string $content = '' ): string {
+	protected function get_pattern( string $marker, string $content = '' ): string {
 		$pattern = "# BEGIN $marker.*?# END $marker";
 
 		if ( empty( $content ) ) {

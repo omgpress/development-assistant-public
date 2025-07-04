@@ -1,18 +1,25 @@
 <?php
 namespace WPDevAssist\Assistant;
 
-use WPDevAssist\ActionQuery;
+use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\Setting;
+use WPDevAssist\Setting\DevEnv;
 
 defined( 'ABSPATH' ) || exit;
 
 class MailHog extends Section {
+	protected ActionQuery $action_query;
+	protected \WPDevAssist\MailHog $mail_hog;
+	protected DevEnv $dev_env;
 	protected bool $is_enabled;
 	protected bool $is_detected;
 
-	public function __construct() {
-		$this->is_enabled  = 'yes' === get_option( Setting\DevEnv::REDIRECT_TO_MAIL_HOG_KEY, Setting\DevEnv::REDIRECT_TO_MAIL_HOG_DEFAULT );
-		$this->is_detected = \WPDevAssist\MailHog::is_http_host_exists();
+	public function __construct( ActionQuery $action_query, \WPDevAssist\MailHog $mail_hog, DevEnv $dev_env ) {
+		$this->action_query = $action_query;
+		$this->mail_hog     = $mail_hog;
+		$this->dev_env      = $dev_env;
+		$this->is_enabled   = 'yes' === get_option( Setting\DevEnv::REDIRECT_TO_MAIL_HOG_KEY, Setting\DevEnv::REDIRECT_TO_MAIL_HOG_DEFAULT );
+		$this->is_detected  = $mail_hog->is_http_host_exists();
 
 		parent::__construct();
 	}
@@ -38,25 +45,25 @@ class MailHog extends Section {
 			if ( $this->is_detected ) {
 				$this->controls[] = new Control(
 					__( 'Go to inbox', 'development-assistant' ),
-					\WPDevAssist\MailHog::get_http_host(),
+					$this->mail_hog->get_http_host(),
 					'',
 					true
 				);
 				$this->controls[] = new Control(
 					__( 'Send a test email', 'development-assistant' ),
-					ActionQuery::get_url( \WPDevAssist\MailHog::SEND_TEST_EMAIL_QUERY_KEY ),
+					$this->action_query->get_url( \WPDevAssist\MailHog::SEND_TEST_EMAIL_QUERY_KEY ),
 					__( 'Confirm sending test email?', 'development-assistant' )
 				);
 			} else {
 				$this->controls[] = new Control(
 					__( 'Go to settings', 'development-assistant' ),
-					Setting\DevEnv::get_url(),
+					$this->dev_env->get_url(),
 				);
 			}
 		} else {
 			$this->controls[] = new Control(
 				__( 'Enable redirect emails', 'development-assistant' ),
-				ActionQuery::get_url( Setting\DevEnv::REDIRECT_TO_MAIL_HOG_QUERY_KEY ),
+				$this->action_query->get_url( Setting\DevEnv::REDIRECT_TO_MAIL_HOG_QUERY_KEY ),
 			);
 		}
 	}

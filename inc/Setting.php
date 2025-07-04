@@ -1,14 +1,20 @@
 <?php
 namespace WPDevAssist;
 
+use WPDevAssist\OmgCore\ActionQuery;
+use WPDevAssist\OmgCore\AdminNotice;
+use WPDevAssist\OmgCore\Asset;
+use WPDevAssist\OmgCore\Fs;
+use WPDevAssist\Setting\Page;
 use WPDevAssist\Setting\Control;
 use WPDevAssist\Setting\DebugLog;
+use WPDevAssist\Setting\DevEnv;
+use WPDevAssist\Setting\SupportUser;
 
 defined( 'ABSPATH' ) || exit;
 
-class Setting extends Setting\Page {
-	public const KEY = KEY;
-
+class Setting extends Page {
+	public const KEY                                      = KEY;
 	public const ENABLE_WP_DEBUG_KEY                      = KEY . '_enable_wp_debug';
 	public const ENABLE_WP_DEBUG_DEFAULT                  = 'no';
 	public const ENABLE_WP_DEBUG_LOG_KEY                  = KEY . '_enable_wp_debug_log';
@@ -25,6 +31,11 @@ class Setting extends Setting\Page {
 	public const ACTIVE_PLUGINS_FIRST_DEFAULT             = 'yes';
 	public const RESET_KEY                                = KEY . '_reset';
 	public const RESET_DEFAULT                            = 'yes';
+	public const TOGGLE_DEBUG_MODE_QUERY_KEY              = KEY . '_toggle_debug_mode';
+	public const DISABLE_DIRECT_ACCESS_TO_LOG_QUERY_KEY   = KEY . '_disable_direct_access_to_log';
+	public const ENABLE_DEBUG_LOG_QUERY_KEY               = KEY . '_enable_log';
+	public const DISABLE_DEBUG_DISPLAY_QUERY_KEY          = KEY . '_disable_debug_display';
+	public const PAGE_TITLE_HOOK                          = KEY . '_settings_page_title';
 
 	protected const SETTING_KEYS = array(
 		self::ENABLE_WP_DEBUG_KEY,
@@ -37,80 +48,108 @@ class Setting extends Setting\Page {
 		self::RESET_KEY,
 	);
 
-	public const TOGGLE_DEBUG_MODE_QUERY_KEY            = KEY . '_toggle_debug_mode';
-	public const DISABLE_DIRECT_ACCESS_TO_LOG_QUERY_KEY = KEY . '_disable_direct_access_to_log';
-	public const ENABLE_DEBUG_LOG_QUERY_KEY             = KEY . '_enable_log';
-	public const DISABLE_DEBUG_DISPLAY_QUERY_KEY        = KEY . '_disable_debug_display';
+	protected Control $control;
+	protected Htaccess $htaccess;
+	protected WPDebug $wp_debug;
+	protected DebugLog $debug_log;
+	protected DevEnv $dev_env;
+	protected SupportUser $support_user;
 
-	public const PAGE_TITLE_HOOK = KEY . '_settings_page_title';
+	public function __construct(
+		ActionQuery $action_query,
+		Asset $asset,
+		Fs $fs,
+		AdminNotice $admin_notice,
+		Htaccess $htaccess,
+		MailHog $mail_hog,
+		WPDebug $wp_debug
+	) {
+		$this->control  = new Control();
+		$this->htaccess = $htaccess;
+		$this->wp_debug = $wp_debug;
 
-	public function __construct() {
-		parent::__construct();
-		ActionQuery::add( static::TOGGLE_DEBUG_MODE_QUERY_KEY, array( $this, 'handle_toggle_debug_mode' ) );
-		ActionQuery::add( static::DISABLE_DIRECT_ACCESS_TO_LOG_QUERY_KEY, array( $this, 'handle_disable_direct_access_to_log' ) );
-		ActionQuery::add( static::DISABLE_DEBUG_DISPLAY_QUERY_KEY, array( $this, 'handle_disable_debug_display' ) );
-		ActionQuery::add( static::ENABLE_DEBUG_LOG_QUERY_KEY, array( $this, 'handle_enable_debug_log' ) );
+		parent::__construct( $asset, $admin_notice );
+		$action_query->add( static::TOGGLE_DEBUG_MODE_QUERY_KEY, $this->handle_toggle_debug_mode() );
+		$action_query->add( static::DISABLE_DIRECT_ACCESS_TO_LOG_QUERY_KEY, $this->handle_disable_direct_access_to_log() );
+		$action_query->add( static::DISABLE_DEBUG_DISPLAY_QUERY_KEY, $this->handle_disable_debug_display() );
+		$action_query->add( static::ENABLE_DEBUG_LOG_QUERY_KEY, $this->handle_enable_debug_log() );
 
-		new Setting\DebugLog();
-		new Setting\SupportUser();
+		$this->debug_log    = new DebugLog( $action_query, $asset, $admin_notice, $fs );
+		$this->dev_env      = new DevEnv( $action_query, $admin_notice, $this->control, $mail_hog );
+		$this->support_user = new SupportUser( $action_query, $asset, $admin_notice, $this->control, $this->dev_env );
 	}
 
-	public function add_page(): void {
-		$page_title = apply_filters(
-			static::PAGE_TITLE_HOOK,
-			__( 'Development Assistant', 'development-assistant' )
-		);
-
-		add_menu_page(
-			$page_title,
-			static::get_toplevel_title(),
-			'administrator',
-			KEY,
-			array( $this, 'render_page' ),
-			'dashicons-pets',
-			999
-		);
-		add_submenu_page(
-			KEY,
-			$page_title,
-			__( 'Settings', 'development-assistant' ),
-			'administrator',
-			KEY,
-			array( $this, 'render_page' )
-		);
+	public function debug_log(): DebugLog {
+		return $this->debug_log;
 	}
 
-	protected static function get_tabs(): array {
+	public function dev_env(): DevEnv {
+		return $this->dev_env;
+	}
+
+	public function support_user(): SupportUser {
+		return $this->support_user;
+	}
+
+	protected function add_page(): callable {
+		return function (): void {
+			$page_title = apply_filters(
+				static::PAGE_TITLE_HOOK,
+				__( 'Development Assistant', 'development-assistant' )
+			);
+
+			add_menu_page(
+				$page_title,
+				$this->get_toplevel_title(),
+				'administrator', // phpcs:ignore
+				KEY,
+				$this->render_page(),
+				'dashicons-pets',
+				999
+			);
+			add_submenu_page(
+				KEY,
+				$page_title,
+				__( 'Settings', 'development-assistant' ),
+				'administrator', // phpcs:ignore
+				KEY,
+			);
+		};
+	}
+
+	protected function get_tabs(): array {
 		return array(
-			Setting\DevEnv::class,
+			$this->dev_env,
 		);
 	}
 
-	public function add_sections(): void {
-		$this->add_wp_debug_section( KEY . '_debug' );
-		$this->add_assistant_section( KEY . '_assistant' );
-		$this->add_plugin_screen_section( KEY . '_plugins_screen' );
-		$this->add_reset_section( KEY . '_reset' );
+	protected function add_sections(): callable {
+		return function (): void {
+			$this->add_wp_debug_section( KEY . '_debug' );
+			$this->add_assistant_section( KEY . '_assistant' );
+			$this->add_plugin_screen_section( KEY . '_plugins_screen' );
+			$this->add_reset_section( KEY . '_reset' );
+		};
 	}
 
 	protected function add_wp_debug_section( string $section_key ): void {
 		$this->add_section(
 			$section_key,
 			esc_html__( 'WP Debug', 'development-assistant' ),
-			array( $this, 'render_wp_debug_description' )
+			$this->render_wp_debug_description()
 		);
 		$this->add_setting(
 			$section_key,
 			static::ENABLE_WP_DEBUG_KEY,
 			wp_kses( __( 'Enable <code>WP_DEBUG</code>', 'development-assistant' ), array( 'code' => array() ) ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ENABLE_WP_DEBUG_DEFAULT
 		);
 		$this->add_setting(
 			$section_key,
 			static::ENABLE_WP_DEBUG_LOG_KEY,
 			wp_kses( __( 'Enable <code>WP_DEBUG_LOG</code>', 'development-assistant' ), array( 'code' => array() ) ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ENABLE_WP_DEBUG_LOG_DEFAULT
 		);
 
@@ -124,7 +163,7 @@ class Setting extends Setting\Page {
 			$section_key,
 			static::ENABLE_WP_DEBUG_DISPLAY_KEY,
 			wp_kses( __( 'Enable <code>WP_DEBUG_DISPLAY</code>', 'development-assistant' ), array( 'code' => array() ) ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ENABLE_WP_DEBUG_DISPLAY_DEFAULT,
 			$args
 		);
@@ -132,11 +171,11 @@ class Setting extends Setting\Page {
 		$args = array(
 			'description' => sprintf(
 				wp_kses( __( 'Public access via %s to the <code>debug.log</code> file will be disabled.', 'development-assistant' ), array( 'code' => array() ) ),
-				'<a href="' . esc_url( DebugLog::get_public_url() ) . '" target="_blank">' . esc_html__( 'the link', 'development-assistant' ) . '</a>'
+				'<a href="' . esc_url( $this->debug_log->get_public_url() ) . '" target="_blank">' . esc_html__( 'the link', 'development-assistant' ) . '</a>'
 			),
 		);
 
-		if ( ! Htaccess::exists() ) {
+		if ( ! $this->htaccess->exists() ) {
 			$args['disabled']    = true;
 			$args['description'] = wp_kses( __( '<code>.htaccess</code> file is required (only supported on Apache HTTP Server).', 'development-assistant' ), array( 'code' => array() ) );
 		}
@@ -145,23 +184,25 @@ class Setting extends Setting\Page {
 			$section_key,
 			static::DISABLE_DIRECT_ACCESS_TO_LOG_KEY,
 			wp_kses( __( 'Disable direct access', 'development-assistant' ), array( 'code' => array() ) ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::DISABLE_DIRECT_ACCESS_TO_LOG_DEFAULT,
 			$args
 		);
 	}
 
-	protected function render_wp_debug_description(): void {
-		echo wp_kses( __( 'These options allow you to safely control the debug constants without the need to manually edit the <code>wp-config.php</code>.', 'development-assistant' ), array( 'code' => array() ) );
-		?>
-		<div style="margin-top: 5px;">
-			<a href="<?php echo esc_url( Setting\DebugLog::get_page_url() ); ?>">
-				<?php
-				echo wp_kses( __( 'Go to <code>debug.log</code>', 'development-assistant' ), array( 'code' => array() ) );
-				?>
-			</a>
-		</div>
-		<?php
+	protected function render_wp_debug_description(): callable {
+		return function (): void {
+			echo wp_kses( __( 'These options allow you to safely control the debug constants without the need to manually edit the <code>wp-config.php</code>.', 'development-assistant' ), array( 'code' => array() ) );
+			?>
+			<div style="margin-top: 5px;">
+				<a href="<?php echo esc_url( $this->debug_log->get_page_url() ); ?>">
+					<?php
+					echo wp_kses( __( 'Go to <code>debug.log</code>', 'development-assistant' ), array( 'code' => array() ) );
+					?>
+				</a>
+			</div>
+			<?php
+		};
 	}
 
 	protected function add_assistant_section( string $section_key ): void {
@@ -173,14 +214,14 @@ class Setting extends Setting\Page {
 			$section_key,
 			static::ENABLE_ASSISTANT_KEY,
 			esc_html__( 'Enable Assistant Panel', 'development-assistant' ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ENABLE_ASSISTANT_DEFAULT
 		);
 		$this->add_setting(
 			$section_key,
 			static::ASSISTANT_OPENED_ON_WP_DASHBOARD_KEY,
 			esc_html__( 'Opened by default on the WordPress Dashboard', 'development-assistant' ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ASSISTANT_OPENED_ON_WP_DASHBOARD_DEFAULT
 		);
 	}
@@ -194,7 +235,7 @@ class Setting extends Setting\Page {
 			$section_key,
 			static::ACTIVE_PLUGINS_FIRST_KEY,
 			esc_html__( 'Show active plugins first', 'development-assistant' ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ACTIVE_PLUGINS_FIRST_DEFAULT
 		);
 	}
@@ -208,7 +249,7 @@ class Setting extends Setting\Page {
 			$key,
 			static::RESET_KEY,
 			esc_html__( 'Reset plugin data when deactivated', 'development-assistant' ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::RESET_DEFAULT,
 			array(
 				'description' => sprintf(
@@ -219,76 +260,84 @@ class Setting extends Setting\Page {
 		);
 	}
 
-	public static function add_default_options(): void {
+	public function add_default_options(): void {
 		parent::add_default_options();
 
 		if ( ! in_array( get_option( static::ENABLE_WP_DEBUG_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option(
 				static::ENABLE_WP_DEBUG_KEY,
-				WPDebug::is_debug_enabled() ? 'yes' : 'no'
+				$this->wp_debug->is_debug_enabled() ? 'yes' : 'no'
 			);
 		}
 
 		if ( ! in_array( get_option( static::ENABLE_WP_DEBUG_LOG_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option(
 				static::ENABLE_WP_DEBUG_LOG_KEY,
-				WPDebug::is_debug_log_enabled() ? 'yes' : 'no'
+				$this->wp_debug->is_debug_log_enabled() ? 'yes' : 'no'
 			);
 		}
 
 		if ( ! in_array( get_option( static::ENABLE_WP_DEBUG_DISPLAY_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option(
 				static::ENABLE_WP_DEBUG_DISPLAY_KEY,
-				WPDebug::is_debug_display_enabled() ? 'yes' : 'no'
+				$this->wp_debug->is_debug_display_enabled() ? 'yes' : 'no'
 			);
 		}
 	}
 
-	public function handle_toggle_debug_mode( array $data ): void {
-		$value      = sanitize_text_field( wp_unslash( $data[ static::TOGGLE_DEBUG_MODE_QUERY_KEY ] ) );
-		$is_dev_env = 'yes' === get_option( Setting\DevEnv::ENABLE_KEY, Setting\DevEnv::ENABLE_DEFAULT );
+	protected function handle_toggle_debug_mode(): callable {
+		return function ( array $data ): void {
+			$value      = sanitize_text_field( wp_unslash( $data[ static::TOGGLE_DEBUG_MODE_QUERY_KEY ] ) );
+			$is_dev_env = 'yes' === get_option( Setting\DevEnv::ENABLE_KEY, Setting\DevEnv::ENABLE_DEFAULT );
 
-		if ( 'yes' !== $value && 'no' !== $value ) {
-			return;
-		}
+			if ( 'yes' !== $value && 'no' !== $value ) {
+				return;
+			}
 
-		update_option( static::ENABLE_WP_DEBUG_KEY, $value );
-		update_option( static::ENABLE_WP_DEBUG_LOG_KEY, $value );
+			update_option( static::ENABLE_WP_DEBUG_KEY, $value );
+			update_option( static::ENABLE_WP_DEBUG_LOG_KEY, $value );
 
-		if ( $is_dev_env || 'yes' !== $value ) {
-			update_option( static::ENABLE_WP_DEBUG_DISPLAY_KEY, $value );
-		}
+			if ( $is_dev_env || 'yes' !== $value ) {
+				update_option( static::ENABLE_WP_DEBUG_DISPLAY_KEY, $value );
+			}
 
-		if ( ! $is_dev_env && Htaccess::exists() && 'yes' === $value ) {
+			if ( ! $is_dev_env && $this->htaccess->exists() && 'yes' === $value ) {
+				update_option( static::DISABLE_DIRECT_ACCESS_TO_LOG_KEY, 'yes' );
+			}
+
+			if ( 'yes' === $value ) {
+				$message = __( 'Debug mode enabled.', 'development-assistant' );
+			} else {
+				$message = __( 'Debug mode disabled.', 'development-assistant' );
+			}
+
+			$this->admin_notice->add_transient( $message, 'success' );
+		};
+	}
+
+	protected function handle_disable_direct_access_to_log(): callable {
+		return function (): void {
+			if ( ! $this->htaccess->exists() ) {
+				return;
+			}
+
 			update_option( static::DISABLE_DIRECT_ACCESS_TO_LOG_KEY, 'yes' );
-		}
-
-		if ( 'yes' === $value ) {
-			$message = __( 'Debug mode enabled.', 'development-assistant' );
-		} else {
-			$message = __( 'Debug mode disabled.', 'development-assistant' );
-		}
-
-		Notice::add_transient( $message, 'success' );
+			$this->admin_notice->add_transient( __( 'Direct access to the <code>debug.log</code> file disabled.', 'development-assistant' ), 'success' );
+		};
 	}
 
-	public function handle_disable_direct_access_to_log(): void {
-		if ( ! Htaccess::exists() ) {
-			return;
-		}
-
-		update_option( static::DISABLE_DIRECT_ACCESS_TO_LOG_KEY, 'yes' );
-		Notice::add_transient( __( 'Direct access to the <code>debug.log</code> file disabled.', 'development-assistant' ), 'success' );
+	protected function handle_disable_debug_display(): callable {
+		return function (): void {
+			update_option( static::ENABLE_WP_DEBUG_DISPLAY_KEY, 'no' );
+			$this->admin_notice->add_transient( __( '<code>WP_DEBUG_DISPLAY</code> disabled.', 'development-assistant' ), 'success' );
+		};
 	}
 
-	public function handle_disable_debug_display(): void {
-		update_option( static::ENABLE_WP_DEBUG_DISPLAY_KEY, 'no' );
-		Notice::add_transient( __( '<code>WP_DEBUG_DISPLAY</code> disabled.', 'development-assistant' ), 'success' );
-	}
-
-	public function handle_enable_debug_log(): void {
-		update_option( static::ENABLE_WP_DEBUG_KEY, 'yes' );
-		update_option( static::ENABLE_WP_DEBUG_LOG_KEY, 'yes' );
-		Notice::add_transient( __( '<code>WP_DEBUG_LOG</code> enabled.', 'development-assistant' ), 'success' );
+	protected function handle_enable_debug_log(): callable {
+		return function (): void {
+			update_option( static::ENABLE_WP_DEBUG_KEY, 'yes' );
+			update_option( static::ENABLE_WP_DEBUG_LOG_KEY, 'yes' );
+			$this->admin_notice->add_transient( __( '<code>WP_DEBUG_LOG</code> enabled.', 'development-assistant' ), 'success' );
+		};
 	}
 }

@@ -4,12 +4,12 @@ namespace WPDevAssist\Model;
 defined( 'ABSPATH' ) || exit;
 
 class ActionLink {
-	protected string $title       = '';
-	protected string $url         = '';
-	protected string $confirm     = '';
-	protected bool $target_blank  = false;
-	protected string $class_names = '';
-	protected bool $is_disabled   = false;
+	protected string $title;
+	protected string $url;
+	protected string $confirm;
+	protected bool $target_blank;
+	protected string $class_names;
+	protected bool $is_disabled;
 
 	public function __construct(
 		string $title,

@@ -2,10 +2,13 @@
 namespace WPDevAssist;
 
 use Exception;
+use WPDevAssist\OmgCore\AdminNotice;
+use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Fs;
 
 defined( 'ABSPATH' ) || exit;
 
-class WPDebug {
+class WPDebug extends OmgFeature {
 	protected const CONFIG_FILE_PATH               = ABSPATH . 'wp-config.php';
 	protected const ORIGINAL_DEBUG_VALUE_KEY       = KEY . '_original_wp_debug_value';
 	protected const ORIGINAL_DEBUG_VALUE_DEFAULT   = 'disabled';
@@ -15,17 +18,27 @@ class WPDebug {
 	protected const ORIGINAL_DISPLAY_VALUE_DEFAULT = 'disabled';
 	protected const HTACCESS_MARKER                = KEY . '_debug_log';
 
+	protected AdminNotice $admin_notice;
+	protected Fs $fs;
+	protected Htaccess $htaccess;
+
 	/**
 	 * @throws Exception
 	 */
-	public function __construct() {
+	public function __construct( AdminNotice $admin_notice, Fs $fs, Htaccess $htaccess ) {
+		parent::__construct();
+
+		$this->admin_notice = $admin_notice;
+		$this->fs           = $fs;
+		$this->htaccess     = $htaccess;
+
 		if ( ! is_admin() ) {
 			return;
 		}
 
 		$this->toggle_debug_mode();
 
-		add_action( 'update_option_' . Setting::DISABLE_DIRECT_ACCESS_TO_LOG_KEY, array( $this, 'replace_htaccess_directives' ), 10, 2 );
+		add_action( 'update_option_' . Setting::DISABLE_DIRECT_ACCESS_TO_LOG_KEY, $this->replace_htaccess_directives(), 10, 2 );
 	}
 
 	/**
@@ -37,17 +50,17 @@ class WPDebug {
 		$is_display_setting_enabled = 'yes' === get_option( Setting::ENABLE_WP_DEBUG_DISPLAY_KEY, Setting::ENABLE_WP_DEBUG_DISPLAY_DEFAULT );
 
 		if (
-			static::is_debug_enabled() === $is_debug_setting_enabled &&
-			static::is_debug_log_enabled() === $is_log_setting_enabled &&
-			static::is_debug_display_enabled() === $is_display_setting_enabled
+			$this->is_debug_enabled() === $is_debug_setting_enabled &&
+			$this->is_debug_log_enabled() === $is_log_setting_enabled &&
+			$this->is_debug_display_enabled() === $is_display_setting_enabled
 		) {
 			return;
 		}
 
-		$config_content = static::read_config_content();
+		$config_content = $this->read_config_content();
 
 		if ( empty( $config_content ) ) {
-			Notice::add_transient(
+			$this->admin_notice->add_transient(
 				sprintf(
 					__( 'Can\'t read the %s.', 'development-assistant' ),
 					static::CONFIG_FILE_PATH
@@ -58,37 +71,37 @@ class WPDebug {
 			return;
 		}
 
-		if ( static::is_debug_enabled() !== $is_debug_setting_enabled ) {
-			$config_content = static::update_config_const(
+		if ( $this->is_debug_enabled() !== $is_debug_setting_enabled ) {
+			$config_content = $this->update_config_const(
 				'WP_DEBUG',
 				$is_debug_setting_enabled ? 'enabled' : 'disabled',
 				$config_content
 			);
 		}
 
-		if ( static::is_debug_log_enabled() !== $is_log_setting_enabled ) {
-			$config_content = static::update_config_const(
+		if ( $this->is_debug_log_enabled() !== $is_log_setting_enabled ) {
+			$config_content = $this->update_config_const(
 				'WP_DEBUG_LOG',
 				$is_log_setting_enabled ? 'enabled' : 'disabled',
 				$config_content
 			);
 		}
 
-		if ( static::is_debug_display_enabled() !== $is_display_setting_enabled ) {
-			$config_content = static::update_config_const(
+		if ( $this->is_debug_display_enabled() !== $is_display_setting_enabled ) {
+			$config_content = $this->update_config_const(
 				'WP_DEBUG_DISPLAY',
 				$is_display_setting_enabled ? 'enabled' : 'disabled',
 				$config_content
 			);
 		}
 
-		static::write_config_content( $config_content );
+		$this->write_config_content( $config_content );
 	}
 
 	/**
 	 * @throws Exception
 	 */
-	protected static function update_config_const( string $name, string $value, string $config_content ): string {
+	protected function update_config_const( string $name, string $value, string $config_content ): string {
 		$search = array(
 			"define( '" . $name . "', true );",
 			"define( '" . $name . "', false );",
@@ -130,34 +143,31 @@ class WPDebug {
 				);
 
 			default:
-				throw new Exception( "\"$value\" is not an allowed value" );
+				throw new Exception( esc_html( "\"$value\" is not an allowed value" ) );
 		}
 	}
 
-	/**
-	 * @return string|bool
-	 */
-	protected static function read_config_content() {
-		return Fs::read( static::CONFIG_FILE_PATH );
+	protected function read_config_content(): string {
+		return $this->fs->read( static::CONFIG_FILE_PATH );
 	}
 
-	protected static function write_config_content( string $content ): bool {
-		return Fs::write( static::CONFIG_FILE_PATH, $content );
+	protected function write_config_content( string $content ): bool {
+		return $this->fs->write( static::CONFIG_FILE_PATH, $content );
 	}
 
-	public static function is_debug_enabled(): bool {
+	public function is_debug_enabled(): bool {
 		return defined( 'WP_DEBUG' ) && WP_DEBUG;
 	}
 
-	public static function is_debug_log_enabled(): bool {
+	public function is_debug_log_enabled(): bool {
 		return defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG;
 	}
 
-	public static function is_debug_display_enabled(): bool {
+	public function is_debug_display_enabled(): bool {
 		return defined( 'WP_DEBUG_DISPLAY' ) && WP_DEBUG_DISPLAY;
 	}
 
-	public static function store_original_config_const(): void {
+	public function store_original_config_const(): void {
 		if ( ! in_array( get_option( static::ORIGINAL_DEBUG_VALUE_KEY ), array( 'enabled', 'disabled', 'missing' ), true ) ) {
 			update_option(
 				static::ORIGINAL_DEBUG_VALUE_KEY,
@@ -183,11 +193,11 @@ class WPDebug {
 	/**
 	 * @throws Exception
 	 */
-	public static function reset_config_const(): void {
-		$config_content = static::read_config_content();
+	public function reset_config_const(): void {
+		$config_content = $this->read_config_content();
 
 		if ( empty( $config_content ) ) {
-			Notice::add_transient(
+			$this->admin_notice->add_transient(
 				sprintf(
 					__( 'Can\'t read the %s.', 'development-assistant' ),
 					static::CONFIG_FILE_PATH
@@ -198,23 +208,23 @@ class WPDebug {
 			return;
 		}
 
-		$config_content = static::update_config_const(
+		$config_content = $this->update_config_const(
 			'WP_DEBUG',
 			get_option( static::ORIGINAL_DEBUG_VALUE_KEY, static::ORIGINAL_DEBUG_VALUE_DEFAULT ),
 			$config_content
 		);
-		$config_content = static::update_config_const(
+		$config_content = $this->update_config_const(
 			'WP_DEBUG_LOG',
 			get_option( static::ORIGINAL_LOG_VALUE_KEY, static::ORIGINAL_LOG_VALUE_DEFAULT ),
 			$config_content
 		);
-		$config_content = static::update_config_const(
+		$config_content = $this->update_config_const(
 			'WP_DEBUG_DISPLAY',
 			get_option( static::ORIGINAL_DISPLAY_VALUE_KEY, static::ORIGINAL_DISPLAY_VALUE_DEFAULT ),
 			$config_content
 		);
 
-		if ( ! static::write_config_content( $config_content ) ) {
+		if ( ! $this->write_config_content( $config_content ) ) {
 			return;
 		}
 
@@ -223,28 +233,30 @@ class WPDebug {
 		delete_option( static::ORIGINAL_DISPLAY_VALUE_KEY );
 	}
 
-	public function replace_htaccess_directives( string $old_value, string $value ): void {
-		if ( 'yes' === $value ) {
-			if ( ! static::add_htaccess_directives() ) {
-				Notice::add_transient(
-					__( 'Can\'t add the directives to the .htaccess file', 'development-assistant' ),
+	protected function replace_htaccess_directives(): callable {
+		return function ( string $old_value, string $value ): void {
+			if ( 'yes' === $value ) {
+				if ( ! $this->add_htaccess_directives() ) {
+					$this->admin_notice->add_transient(
+						__( 'Can\'t add the directives to the .htaccess file', 'development-assistant' ),
+						'error'
+					);
+				}
+
+				return;
+			}
+
+			if ( ! $this->remove_htaccess_directives() ) {
+				$this->admin_notice->add_transient(
+					__( 'Can\'t remove the directives from the .htaccess file', 'development-assistant' ),
 					'error'
 				);
 			}
-
-			return;
-		}
-
-		if ( ! static::remove_htaccess_directives() ) {
-			Notice::add_transient(
-				__( 'Can\'t remove the directives from the .htaccess file', 'development-assistant' ),
-				'error'
-			);
-		}
+		};
 	}
 
-	public static function add_htaccess_directives(): bool {
-		return Htaccess::replace(
+	public function add_htaccess_directives(): bool {
+		return $this->htaccess->replace(
 			static::HTACCESS_MARKER,
 			'<If "%{REQUEST_URI} =~ m#^/wp-content/debug.log#">
 			    <IfModule mod_authz_core.c>
@@ -258,7 +270,7 @@ class WPDebug {
 		);
 	}
 
-	public static function remove_htaccess_directives(): bool {
-		return Htaccess::remove( static::HTACCESS_MARKER );
+	public function remove_htaccess_directives(): bool {
+		return $this->htaccess->remove( static::HTACCESS_MARKER );
 	}
 }

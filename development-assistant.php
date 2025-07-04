@@ -3,7 +3,7 @@
  * Plugin Name: Development Assistant
  * Plugin URI: https://devassistant.dpripa.com
  * Description: Toolkit for debugging and customer support.
- * Version: 1.2.6
+ * Version: 1.2.7
  * Text Domain: development-assistant
  * Author: Dmitry Pripa
  * Author URI: https://dpripa.com
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 const KEY       = 'wp_dev_assist';
 const ROOT_FILE = __FILE__;
 
-$autoload = __DIR__ . '/vendor/autoload.php';
+$autoload = __DIR__ . '/lib/vendor/scoper-autoload.php';
 
 if ( ! file_exists( $autoload ) ) {
 	throw new Exception( 'Autoloader not exists' );
@@ -29,4 +29,8 @@ if ( ! file_exists( $autoload ) ) {
 
 require_once $autoload;
 
-new Setup();
+function app(): App {
+	return App::get_instance();
+}
+
+app();

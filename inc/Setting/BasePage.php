@@ -1,21 +1,28 @@
 <?php
 namespace WPDevAssist\Setting;
 
-use WPDevAssist\Notice;
+use WPDevAssist\OmgCore\AdminNotice;
+use WPDevAssist\OmgCore\OmgFeature;
 
 defined( 'ABSPATH' ) || exit;
 
-abstract class BasePage {
+abstract class BasePage extends OmgFeature {
 	public const KEY = '';
 
 	protected const SETTING_KEYS = array();
 
-	public function __construct() {
-		add_action( 'admin_init', array( $this, 'add_sections' ) );
-		add_action( 'updated_option', array( $this, 'render_notice_saved' ) );
+	protected AdminNotice $admin_notice;
+
+	public function __construct( AdminNotice $admin_notice ) {
+		parent::__construct();
+
+		$this->admin_notice = $admin_notice;
+
+		add_action( 'admin_init', $this->add_sections() );
+		add_action( 'updated_option', $this->render_notice_saved() );
 	}
 
-	abstract protected function add_sections(): void;
+	abstract protected function add_sections(): callable;
 
 	public function add_section( string $key, string $title, ?callable $callback = null ): void {
 		add_settings_section( $key, $title, $this->get_render_section_description( $callback ), static::KEY );
@@ -36,14 +43,14 @@ abstract class BasePage {
 	}
 
 	/**
-	 * @param mixed $default
+	 * @param mixed $default_value
 	 */
 	protected function add_setting(
 		string $section_key,
 		string $key,
 		string $title,
-		string $control_classname,
-		$default,
+		callable $control,
+		$default_value,
 		array $args = array(),
 		?callable $sanitize_callback = null
 	): void {
@@ -55,24 +62,24 @@ abstract class BasePage {
 		add_settings_field(
 			$key,
 			$title,
-			array( $control_classname, 'render' ),
+			$control,
 			static::KEY,
 			$section_key,
 			wp_parse_args(
 				$args,
 				array(
 					'name'    => $key,
-					'default' => $default,
+					'default' => $default_value,
 				)
 			)
 		);
 	}
 
-	abstract public static function is_current(): bool;
+	abstract public function is_current(): bool;
 
-	public static function add_default_options(): void {}
+	public function add_default_options(): void {}
 
-	protected static function is_setting_page(): bool {
+	protected function is_setting_page(): bool {
 		return isset( $_GET['page'] ) && static::KEY === sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore
 	}
 
@@ -85,21 +92,23 @@ abstract class BasePage {
 		></a>';
 	}
 
-	public static function reset(): void {
+	public function reset(): void {
 		foreach ( static::SETTING_KEYS as $setting_key ) {
 			delete_option( $setting_key );
 		}
 	}
 
-	public function render_notice_saved(): void {
-		if (
-			1 < did_action( 'updated_option' ) ||
-			empty( $_POST['_wpnonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), static::KEY . '-options' )
-		) {
-			return;
-		}
+	protected function render_notice_saved(): callable {
+		return function (): void {
+			if (
+				1 < did_action( 'updated_option' ) ||
+				empty( $_POST['_wpnonce'] ) ||
+				! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), static::KEY . '-options' )
+			) {
+				return;
+			}
 
-		Notice::add_transient( __( 'Settings saved.', 'development-assistant' ), 'success' );
+			$this->admin_notice->add_transient( __( 'Settings saved.', 'development-assistant' ), 'success' );
+		};
 	}
 }

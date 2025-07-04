@@ -1,6 +1,6 @@
 === Development Assistant ===
 
-Stable tag: 1.2.6
+Stable tag: 1.2.7
 Contributors: dpripa
 Requires PHP: 7.4.0
 Requires at least: 5.0.0
@@ -29,6 +29,11 @@ Development Assistant is a comprehensive toolkit designed to streamline the deve
 Development Assistant is your go-to solution for simplifying WordPress development tasks and enhancing support capabilities. Whether you're troubleshooting intricate issues or optimizing your development workflow, this plugin equips you with the tools you need for success.
 
 == Changelog ==
+
+= 1.2.7 =
+- Fixed Assistant Panel positioning on the screen
+- Fixed MailHog host handling
+- Refactored code base to improve performance
 
 = 1.2.6 =
 - Minor fixes

@@ -6,9 +6,9 @@ defined( 'ABSPATH' ) || exit;
 abstract class Tab extends BasePage {
 	public const PAGE_KEY = '';
 
-	abstract public static function get_title(): string;
+	abstract public function get_title(): string;
 
-	public static function get_url(): string {
+	public function get_url(): string {
 		return add_query_arg(
 			array(
 				'page' => static::PAGE_KEY,
@@ -18,7 +18,7 @@ abstract class Tab extends BasePage {
 		);
 	}
 
-	public static function is_current(): bool {
+	public function is_current(): bool {
 		return isset( $_GET['page'] ) && static::PAGE_KEY === sanitize_text_field( wp_unslash( $_GET['page'] ) ) && // phpcs:ignore
 			isset( $_GET['tab'] ) && static::KEY === sanitize_text_field( wp_unslash( $_GET['tab'] ) ); // phpcs:ignore
 	}

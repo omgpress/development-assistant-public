@@ -1,26 +1,26 @@
 <?php
 namespace WPDevAssist\Setting;
 
-use WPDevAssist\ActionQuery;
 use WPDevAssist\MailHog;
-use WPDevAssist\Notice;
+use WPDevAssist\OmgCore\ActionQuery;
+use WPDevAssist\OmgCore\AdminNotice;
 use WPDevAssist\Setting;
 use const WPDevAssist\KEY;
 
 defined( 'ABSPATH' ) || exit;
 
 class DevEnv extends Tab {
-	public const PAGE_KEY = Setting::KEY;
-	public const KEY      = self::PAGE_KEY . '_dev_env';
-
-	public const ENABLE_KEY                   = KEY . '_force_dev_env';
-	public const ENABLE_DEFAULT               = 'no';
-	public const REDIRECT_TO_MAIL_HOG_KEY     = KEY . '_redirect_to_mail_hog';
-	public const REDIRECT_TO_MAIL_HOG_DEFAULT = 'no';
-	public const MAIL_HOG_HTTP_HOST_KEY       = KEY . '_mail_hog_http_address';
-	public const MAIL_HOG_HTTP_HOST_DEFAULT   = '127.0.0.1:8025/mailhog';
-	public const MAIL_HOG_SMTP_HOST_KEY       = KEY . '_mail_hog_smtp_address';
-	public const MAIL_HOG_SMTP_HOST_DEFAULT   = '127.0.0.1:1025';
+	public const PAGE_KEY                       = Setting::KEY;
+	public const KEY                            = self::PAGE_KEY . '_dev_env';
+	public const ENABLE_KEY                     = KEY . '_force_dev_env';
+	public const ENABLE_DEFAULT                 = 'no';
+	public const REDIRECT_TO_MAIL_HOG_KEY       = KEY . '_redirect_to_mail_hog';
+	public const REDIRECT_TO_MAIL_HOG_DEFAULT   = 'no';
+	public const MAIL_HOG_HTTP_HOST_KEY         = KEY . '_mail_hog_http_address';
+	public const MAIL_HOG_HTTP_HOST_DEFAULT     = '127.0.0.1:8025/mailhog';
+	public const MAIL_HOG_SMTP_HOST_KEY         = KEY . '_mail_hog_smtp_address';
+	public const MAIL_HOG_SMTP_HOST_DEFAULT     = '127.0.0.1:1025';
+	public const REDIRECT_TO_MAIL_HOG_QUERY_KEY = KEY . '_redirect_to_mail_hog';
 
 	protected const SETTING_KEYS = array(
 		self::ENABLE_KEY,
@@ -28,8 +28,6 @@ class DevEnv extends Tab {
 		self::MAIL_HOG_HTTP_HOST_KEY,
 		self::MAIL_HOG_SMTP_HOST_KEY,
 	);
-
-	public const REDIRECT_TO_MAIL_HOG_QUERY_KEY = KEY . '_redirect_to_mail_hog';
 
 	protected const DEV_HOSTS = array(
 		'localhost',
@@ -45,31 +43,42 @@ class DevEnv extends Tab {
 		'local',
 	);
 
-	public function __construct() {
-		parent::__construct();
-		ActionQuery::add( static::REDIRECT_TO_MAIL_HOG_QUERY_KEY, array( $this, 'handle_redirect_to_mail_hog' ) );
+	protected ActionQuery $action_query;
+	protected AdminNotice $admin_notice;
+	protected Control $control;
+	protected MailHog $mail_hog;
+
+	public function __construct( ActionQuery $action_query, AdminNotice $admin_notice, Control $control, MailHog $mail_hog ) {
+		$this->action_query = $action_query;
+		$this->control      = $control;
+		$this->mail_hog     = $mail_hog;
+
+		parent::__construct( $admin_notice );
+		$action_query->add( static::REDIRECT_TO_MAIL_HOG_QUERY_KEY, $this->handle_redirect_to_mail_hog() );
 	}
 
-	public static function get_title(): string {
+	public function get_title(): string {
 		return __( 'Development Environment', 'development-assistant' );
 	}
 
-	public function add_sections(): void {
-		$this->add_general_section( static::KEY . '_general' );
-		$this->add_mail_hog_section( static::KEY . '_mail_hog' );
+	protected function add_sections(): callable {
+		return function (): void {
+			$this->add_general_section( static::KEY . '_general' );
+			$this->add_mail_hog_section( static::KEY . '_mail_hog' );
+		};
 	}
 
 	protected function add_general_section( string $section_key ) {
 		$this->add_section(
 			$section_key,
 			'',
-			array( $this, 'render_general_description' )
+			$this->render_general_description()
 		);
 		$this->add_setting(
 			$section_key,
 			static::ENABLE_KEY,
 			__( 'Consider as a development environment', 'development-assistant' ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::ENABLE_DEFAULT,
 			array(
 				'description' => '<b class="da-setting__error-text">' . esc_html__( 'Warning!', 'development-assistant' ) . '</b> ' . esc_html__( 'The development environment is detected automatically, change this setting only if you are sure that autodetection failed.', 'development-assistant' ),
@@ -77,12 +86,14 @@ class DevEnv extends Tab {
 		);
 	}
 
-	protected function render_general_description(): void {
-		?>
-		<b><?php echo esc_html__( 'Note!', 'development-assistant' ); ?></b> <?php echo esc_html__( 'These settings are for the development environment only.', 'development-assistant' ); ?>
-		<br>
-		<b><?php echo esc_html__( 'Please avoid using if the site isn\'t deployed in a development environment or you don\'t understand what it\'s about.', 'development-assistant' ); ?></b>
-		<?php
+	protected function render_general_description(): callable {
+		return function (): void {
+			?>
+			<b><?php echo esc_html__( 'Note!', 'development-assistant' ); ?></b> <?php echo esc_html__( 'These settings are for the development environment only.', 'development-assistant' ); ?>
+			<br>
+			<b><?php echo esc_html__( 'Please avoid using if the site isn\'t deployed in a development environment or you don\'t understand what it\'s about.', 'development-assistant' ); ?></b>
+			<?php
+		};
 	}
 
 	protected function add_mail_hog_section( string $section_key ): void {
@@ -100,7 +111,7 @@ class DevEnv extends Tab {
 			$section_key,
 			static::REDIRECT_TO_MAIL_HOG_KEY,
 			esc_html__( 'Redirect emails to MailHog', 'development-assistant' ),
-			Control\Checkbox::class,
+			array( $this->control, 'render_checkbox' ),
 			static::REDIRECT_TO_MAIL_HOG_DEFAULT,
 			array(
 				'disabled'    => ! $is_dev_env,
@@ -108,16 +119,16 @@ class DevEnv extends Tab {
 			)
 		);
 
-		$is_enabled          = MailHog::is_enabled();
-		$is_http_host_exists = MailHog::is_http_host_exists();
+		$is_enabled          = $this->mail_hog->is_enabled();
+		$is_http_host_exists = $this->mail_hog->is_http_host_exists();
 		$status_description  = '';
 
 		if ( $is_enabled ) {
 			if ( $is_http_host_exists ) {
 				$status_description = sprintf(
 					esc_html__( 'To check if the SMTP host is responding, %1$s and check if it arrives in the %2$s.', 'development-assistant' ),
-					'<a href="' . ActionQuery::get_url( MailHog::SEND_TEST_EMAIL_QUERY_KEY ) . '">' . esc_html__( 'send a test email', 'development-assistant' ) . '</a>',
-					'<a href="' . MailHog::get_http_host() . '" target="_blank">' . esc_html__( 'MailHog UI', 'development-assistant' ) . '</a>'
+					'<a href="' . $this->action_query->get_url( MailHog::SEND_TEST_EMAIL_QUERY_KEY ) . '">' . esc_html__( 'send a test email', 'development-assistant' ) . '</a>',
+					'<a href="' . $this->mail_hog->get_http_host() . '" target="_blank">' . esc_html__( 'MailHog UI', 'development-assistant' ) . '</a>'
 				);
 			} else {
 				$status_description = esc_html__( 'It looks like MailHog isn\'t configured on your server, or you specified the wrong hosts.', 'development-assistant' );
@@ -128,7 +139,7 @@ class DevEnv extends Tab {
 			$section_key,
 			'',
 			esc_html__( 'Status', 'development-assistant' ),
-			Control\Status::class,
+			array( $this->control, 'render_status' ),
 			'',
 			array(
 				'disabled'      => ! $is_enabled,
@@ -142,7 +153,7 @@ class DevEnv extends Tab {
 			$section_key,
 			static::MAIL_HOG_HTTP_HOST_KEY,
 			esc_html__( 'HTTP host', 'development-assistant' ),
-			Control\Text::class,
+			array( $this->control, 'render_text_input' ),
 			static::MAIL_HOG_HTTP_HOST_DEFAULT,
 			array(
 				'disabled'    => ! $is_enabled,
@@ -153,7 +164,7 @@ class DevEnv extends Tab {
 			$section_key,
 			static::MAIL_HOG_SMTP_HOST_KEY,
 			esc_html__( 'SMTP host', 'development-assistant' ),
-			Control\Text::class,
+			array( $this->control, 'render_text_input' ),
 			static::MAIL_HOG_SMTP_HOST_DEFAULT,
 			array(
 				'disabled'    => ! $is_enabled,
@@ -162,13 +173,13 @@ class DevEnv extends Tab {
 		);
 	}
 
-	public static function add_default_options(): void {
-		if ( static::is_detected_dev_env() && ! in_array( get_option( static::ENABLE_KEY ), array( 'yes', 'no' ), true ) ) {
+	public function add_default_options(): void {
+		if ( $this->is_detected_dev_env() && ! in_array( get_option( static::ENABLE_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option( static::ENABLE_KEY, 'yes' );
 		}
 	}
 
-	public static function is_detected_dev_env(): bool {
+	public function is_detected_dev_env(): bool {
 		$host      = explode( '.', wp_parse_url( home_url(), PHP_URL_HOST ) );
 		$root_host = end( $host );
 
@@ -177,8 +188,10 @@ class DevEnv extends Tab {
 			( defined( 'WP_ENVIRONMENT' ) && in_array( WP_ENVIRONMENT, static::DEV_ENVS, true ) );
 	}
 
-	public function handle_redirect_to_mail_hog(): void {
-		update_option( static::REDIRECT_TO_MAIL_HOG_QUERY_KEY, 'yes' );
-		Notice::add_transient( __( 'Redirect emails to MailHog enabled.', 'development-assistant' ), 'success' );
+	public function handle_redirect_to_mail_hog(): callable {
+		return function (): void {
+			update_option( static::REDIRECT_TO_MAIL_HOG_QUERY_KEY, 'yes' );
+			$this->admin_notice->add_transient( __( 'Redirect emails to MailHog enabled.', 'development-assistant' ), 'success' );
+		};
 	}
 }

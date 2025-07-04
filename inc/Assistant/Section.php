@@ -1,9 +1,11 @@
 <?php
 namespace WPDevAssist\Assistant;
 
+use WPDevAssist\OmgCore\OmgFeature;
+
 defined( 'ABSPATH' ) || exit;
 
-abstract class Section {
+abstract class Section extends OmgFeature {
 	protected string $title              = '';
 	protected string $content            = '';
 	protected string $status_level       = 'success';
@@ -15,6 +17,7 @@ abstract class Section {
 	protected array $controls = array();
 
 	public function __construct() {
+		parent::__construct();
 		$this->set_title();
 		$this->set_content();
 		$this->set_controls();
