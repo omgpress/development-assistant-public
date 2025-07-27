@@ -16,6 +16,7 @@ class Dependency extends OmgFeature
      * @var Plugin[]
      */
     protected array $plugins = array();
+    protected string $install_and_activate_action_query_key;
     protected string $notice_title_required_singular;
     protected string $notice_title_optional_singular;
     protected string $notice_title_required_plural;
@@ -29,15 +30,16 @@ class Dependency extends OmgFeature
     protected string $notice_success_activate;
     protected string $notice_success_install_and_activate;
     protected string $notice_error_install;
-    protected string $install_and_activate_action_query_key = 'omg_core_dependency_install_and_activate_plugins';
-    protected array $config_props = array('notice_title_required_singular' => 'The <b>%1$s</b> plugin%2$s is <b>required</b> for the <b>"%3$s"</b> features to function.', 'notice_title_optional_singular' => 'The <b>%1$s</b> plugin%2$s is <b>recommended</b> for the all <b>"%3$s"</b> features to function.', 'notice_title_required_plural' => 'The following plugins are <b>required</b> for the <b>%s</b> features to function:', 'notice_title_optional_plural' => 'The following plugins are <b>recommended</b> for the all <b>%s</b> features to function:', 'notice_item_not_installed' => 'not installed', 'notice_item_undefiled_installation_url' => 'not installed, can\'t be installed automatically', 'notice_btn_activate' => 'Activate', 'notice_btn_install_and_activate' => 'Install and activate', 'notice_btn_activate_only_required' => 'Activate only required', 'notice_btn_install_and_activate_only_required' => 'Install and activate only required', 'notice_success_activate' => 'Required plugin(s) activated.', 'notice_success_install_and_activate' => 'Required plugins(s) installed and activated.', 'notice_error_install' => 'The "%1$s" plugin can\'t be installed automatically. Please install it manually.');
-    public function __construct(Info $info, AdminNotice $admin_notice, ActionQuery $action_query, array $config = array())
+    protected string $install_and_activate_action_capability;
+    protected array $config_props = array('notice_title_required_singular' => 'The <b>%1$s</b> plugin%2$s is <b>required</b> for the <b>"%3$s"</b> features to function.', 'notice_title_optional_singular' => 'The <b>%1$s</b> plugin%2$s is <b>recommended</b> for the all <b>"%3$s"</b> features to function.', 'notice_title_required_plural' => 'The following plugins are <b>required</b> for the <b>%s</b> features to function:', 'notice_title_optional_plural' => 'The following plugins are <b>recommended</b> for the all <b>%s</b> features to function:', 'notice_item_not_installed' => 'not installed', 'notice_item_undefiled_installation_url' => 'not installed, can\'t be installed automatically', 'notice_btn_activate' => 'Activate', 'notice_btn_install_and_activate' => 'Install and activate', 'notice_btn_activate_only_required' => 'Activate only required', 'notice_btn_install_and_activate_only_required' => 'Install and activate only required', 'notice_success_activate' => 'Required plugin(s) activated.', 'notice_success_install_and_activate' => 'Required plugins(s) installed and activated.', 'notice_error_install' => 'The "%1$s" plugin can\'t be installed automatically. Please install it manually.', 'install_and_activate_action_capability' => 'activate_plugins');
+    public function __construct(string $key, Info $info, AdminNotice $admin_notice, ActionQuery $action_query, array $config = array())
     {
         parent::__construct($config);
         $this->info = $info;
         $this->admin_notice = $admin_notice;
         $this->action_query = $action_query;
-        $action_query->add($this->install_and_activate_action_query_key, $this->handle_install_and_activate_plugins(), \true, 'activate_plugins');
+        $this->install_and_activate_action_query_key = "{$key}_omg_core_dependency_install_and_activate_plugins";
+        $action_query->add($this->install_and_activate_action_query_key, $this->handle_install_and_activate_plugins(), \true, $this->install_and_activate_action_capability);
     }
     /**
      * @param string|array $filename
@@ -91,7 +93,7 @@ class Dependency extends OmgFeature
         if (empty($required_not_active) && empty($optional_not_active)) {
             return;
         }
-        $this->render_notice_css();
+        add_action('admin_head', $this->render_notice_css());
         ob_start();
         if ($required_not_active) {
             $this->render_notice_content($required_not_active, $this->notice_title_required_singular, $this->notice_title_required_plural);
@@ -207,52 +209,54 @@ class Dependency extends OmgFeature
 		</ul>
 		<?php 
     }
-    protected function render_notice_css(): void
+    protected function render_notice_css(): callable
     {
-        ob_start();
-        ?>
-		<style>
-			.<?php 
-        echo esc_html($this->get_notice_css_class('title'));
-        ?> {
-				margin: 0;
-				padding: 0;
-			}
+        return function (): void {
+            ob_start();
+            ?>
+			<style>
+				.<?php 
+            echo esc_html($this->get_notice_css_class('title'));
+            ?> {
+					margin: 0;
+					padding: 0;
+				}
 
-			.<?php 
-        echo esc_html($this->get_notice_css_class('list'));
-        ?> {
-				margin: 0;
-			}
+				.<?php 
+            echo esc_html($this->get_notice_css_class('list'));
+            ?> {
+					margin: 0;
+				}
 
-			.<?php 
-        echo esc_html($this->get_notice_css_class('optional'));
-        ?> {
-				margin-top: 0.5rem;
-			}
+				.<?php 
+            echo esc_html($this->get_notice_css_class('optional'));
+            ?> {
+					margin-top: 0.5rem;
+				}
 
-			.<?php 
-        echo esc_html($this->get_notice_css_class('actions'));
-        ?> {
-				display: flex;
-				align-items: center;
-				margin: 0.6rem 0 0;
-			}
+				.<?php 
+            echo esc_html($this->get_notice_css_class('actions'));
+            ?> {
+					display: flex;
+					align-items: center;
+					margin: 0.6rem 0 0;
+				}
 
-			.<?php 
-        echo esc_html($this->get_notice_css_class('actions'));
-        ?> li {
-				margin: 0;
-			}
+				.<?php 
+            echo esc_html($this->get_notice_css_class('actions'));
+            ?> li {
+					margin: 0;
+				}
 
-			.<?php 
-        echo esc_html($this->get_notice_css_class('actions'));
-        ?> li:not(:last-child) {
-				margin-right: 0.75rem;
-			}
-		</style>
-		<?php 
-        echo wp_kses(ob_get_clean(), array('style' => array()));
+				.<?php 
+            echo esc_html($this->get_notice_css_class('actions'));
+            ?> li:not(:last-child) {
+					margin-right: 0.75rem;
+				}
+			</style>
+			<?php 
+            echo wp_kses(ob_get_clean(), array('style' => array()));
+        };
     }
     protected function get_notice_css_class(string $css_class): string
     {

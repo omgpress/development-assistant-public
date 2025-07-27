@@ -148,11 +148,11 @@ class WPDebug extends OmgFeature {
 	}
 
 	protected function read_config_content(): string {
-		return $this->fs->read( static::CONFIG_FILE_PATH );
+		return $this->fs->read_text_file( static::CONFIG_FILE_PATH );
 	}
 
 	protected function write_config_content( string $content ): bool {
-		return $this->fs->write( static::CONFIG_FILE_PATH, $content );
+		return $this->fs->write_text_file( static::CONFIG_FILE_PATH, $content );
 	}
 
 	public function is_debug_enabled(): bool {

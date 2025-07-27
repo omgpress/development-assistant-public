@@ -26,7 +26,7 @@ class Htaccess extends OmgFeature {
 			return false;
 		}
 
-		$file_content = $this->fs->read( static::PATH );
+		$file_content = $this->fs->read_text_file( static::PATH );
 
 		if ( ! $file_content ) {
 			return false;
@@ -46,7 +46,7 @@ class Htaccess extends OmgFeature {
 			return $file_content;
 		}
 
-		return $this->fs->write( static::PATH, $file_content, 0644 );
+		return $this->fs->write_text_file( static::PATH, $file_content, 0644 );
 	}
 
 	public function remove( string $marker ): bool {

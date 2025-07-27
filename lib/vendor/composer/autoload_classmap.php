@@ -35,6 +35,7 @@ return array(
     'WPDevAssist\\OmgCore\\Info' => $vendorDir . '/omgpress/omgcore/inc/Info.php',
     'WPDevAssist\\OmgCore\\InfoPlugin' => $vendorDir . '/omgpress/omgcore/inc/InfoPlugin.php',
     'WPDevAssist\\OmgCore\\InfoTheme' => $vendorDir . '/omgpress/omgcore/inc/InfoTheme.php',
+    'WPDevAssist\\OmgCore\\Logger' => $vendorDir . '/omgpress/omgcore/inc/Logger.php',
     'WPDevAssist\\OmgCore\\OmgApp' => $vendorDir . '/omgpress/omgcore/inc/OmgApp.php',
     'WPDevAssist\\OmgCore\\OmgFeature' => $vendorDir . '/omgpress/omgcore/inc/OmgFeature.php',
     'WPDevAssist\\OmgCore\\View' => $vendorDir . '/omgpress/omgcore/inc/View.php',

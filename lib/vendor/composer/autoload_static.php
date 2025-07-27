@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit0ae3c240357615aec9ffc2c7d9e8f349
+class ComposerStaticInit528ffd1451638055b5b4af36047699f7
 {
     public static $prefixLengthsPsr4 = array (
         'W' => 
@@ -50,6 +50,7 @@ class ComposerStaticInit0ae3c240357615aec9ffc2c7d9e8f349
         'WPDevAssist\\OmgCore\\Info' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Info.php',
         'WPDevAssist\\OmgCore\\InfoPlugin' => __DIR__ . '/..' . '/omgpress/omgcore/inc/InfoPlugin.php',
         'WPDevAssist\\OmgCore\\InfoTheme' => __DIR__ . '/..' . '/omgpress/omgcore/inc/InfoTheme.php',
+        'WPDevAssist\\OmgCore\\Logger' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Logger.php',
         'WPDevAssist\\OmgCore\\OmgApp' => __DIR__ . '/..' . '/omgpress/omgcore/inc/OmgApp.php',
         'WPDevAssist\\OmgCore\\OmgFeature' => __DIR__ . '/..' . '/omgpress/omgcore/inc/OmgFeature.php',
         'WPDevAssist\\OmgCore\\View' => __DIR__ . '/..' . '/omgpress/omgcore/inc/View.php',
@@ -72,9 +73,9 @@ class ComposerStaticInit0ae3c240357615aec9ffc2c7d9e8f349
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit0ae3c240357615aec9ffc2c7d9e8f349::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit0ae3c240357615aec9ffc2c7d9e8f349::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit0ae3c240357615aec9ffc2c7d9e8f349::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit528ffd1451638055b5b4af36047699f7::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit528ffd1451638055b5b4af36047699f7::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit528ffd1451638055b5b4af36047699f7::$classMap;
 
         }, null, ClassLoader::class);
     }

@@ -60,7 +60,7 @@ class DebugLog extends Page {
 			<div class="da-debug-log__container">
 				<?php
 				if ( $this->is_file_exists() ) {
-					$log = $this->fs->read( static::LOG_FILE_PATH );
+					$log = $this->fs->read_text_file( static::LOG_FILE_PATH );
 
 					if ( $log ) {
 						?>

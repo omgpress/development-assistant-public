@@ -1,10 +1,10 @@
 === Development Assistant ===
 
-Stable tag: 1.2.7
-Contributors: dpripa
+Stable tag: 1.2.8
+Contributors: omgpress
 Requires PHP: 7.4.0
 Requires at least: 5.0.0
-Tested up to: 6.8.1
+Tested up to: 6.8.2
 License: GPL-2.0-or-later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Tags: development, support, debug, testing, manager
@@ -29,6 +29,9 @@ Development Assistant is a comprehensive toolkit designed to streamline the deve
 Development Assistant is your go-to solution for simplifying WordPress development tasks and enhancing support capabilities. Whether you're troubleshooting intricate issues or optimizing your development workflow, this plugin equips you with the tools you need for success.
 
 == Changelog ==
+
+= 1.2.8 =
+- Just updated dependencies and codebase accordingly
 
 = 1.2.7 =
 - Fixed Assistant Panel positioning on the screen

@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name: Development Assistant
- * Plugin URI: https://devassistant.dpripa.com
+ * Plugin URI: https://omgpress.com/development-assistant
  * Description: Toolkit for debugging and customer support.
- * Version: 1.2.7
+ * Version: 1.2.8
  * Text Domain: development-assistant
- * Author: Dmitry Pripa
- * Author URI: https://dpripa.com
+ * Author: OmgPress
+ * Author URI: https://omgpress.com
  * Requires PHP: 7.4.0
  * Requires at least: 5.0.0
  * License: GPL-2.0-or-later

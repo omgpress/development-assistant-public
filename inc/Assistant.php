@@ -1,6 +1,7 @@
 <?php
 namespace WPDevAssist;
 
+use Exception;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\Asset;
 use WPDevAssist\OmgCore\OmgFeature;
@@ -36,6 +37,7 @@ class Assistant extends OmgFeature {
 
 	/**
 	 * @return Assistant\Section[]
+	 * @throws Exception
 	 */
 	protected function get_sections(): array {
 		$sections = array(
