@@ -8,6 +8,6 @@ The plugin is available in [the official WordPress.org directory](https://wordpr
 ### Download
 It's recommended to install the plugin from [the WordPress.org directory](https://wordpress.org/plugins/development-assistant/).
 
-If for some reason you don't have access or encounter any other issues connecting to the official directory, you can download the plugin from [the Releases section](https://github.com/dpripa/development-assistant-public/releases).
+If for some reason you don't have access or encounter any other issues connecting to the official directory, you can download the plugin from [the Releases section](https://github.com/omgpress/development-assistant-public/releases).
 
-**Note!** It's not recommended to download this repository as a zip archive and install the plugin under its name, as it contains the "-public" suffix which isn't compatible with the plugin's current domain. Instead, just download it directly from [the Releases section](https://github.com/dpripa/development-assistant-public/releases).
+**Note!** It's not recommended to download this repository as a zip archive and install the plugin under its name, as it contains the "-public" suffix which isn't compatible with the plugin's current domain. Instead, just download it directly from [the Releases section](https://github.com/omgpress/development-assistant-public/releases).
