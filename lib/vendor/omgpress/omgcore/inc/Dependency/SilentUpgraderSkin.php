@@ -2,7 +2,7 @@
 
 namespace WPDevAssist\OmgCore\Dependency;
 
-use WPDevAssist\WP_Upgrader_Skin;
+use WP_Upgrader_Skin;
 defined('ABSPATH') || exit;
 class SilentUpgraderSkin extends WP_Upgrader_Skin
 {

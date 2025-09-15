@@ -3,6 +3,9 @@
 namespace WPDevAssist\OmgCore;
 
 defined('ABSPATH') || exit;
+/**
+ * @ignore
+ */
 class ViewTheme extends View
 {
     protected string $dir;

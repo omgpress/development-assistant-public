@@ -4,6 +4,7 @@ namespace WPDevAssist;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
 use WPDevAssist\OmgCore\Asset;
+use WPDevAssist\OmgCore\Env;
 use WPDevAssist\OmgCore\Fs;
 use WPDevAssist\Setting\Page;
 use WPDevAssist\Setting\Control;
@@ -62,7 +63,8 @@ class Setting extends Page {
 		AdminNotice $admin_notice,
 		Htaccess $htaccess,
 		MailHog $mail_hog,
-		WPDebug $wp_debug
+		WPDebug $wp_debug,
+		Env $env
 	) {
 		$this->control  = new Control();
 		$this->htaccess = $htaccess;
@@ -75,8 +77,8 @@ class Setting extends Page {
 		$action_query->add( static::ENABLE_DEBUG_LOG_QUERY_KEY, $this->handle_enable_debug_log() );
 
 		$this->debug_log    = new DebugLog( $action_query, $asset, $admin_notice, $fs );
-		$this->dev_env      = new DevEnv( $action_query, $admin_notice, $this->control, $mail_hog );
-		$this->support_user = new SupportUser( $action_query, $asset, $admin_notice, $this->control, $this->dev_env );
+		$this->dev_env      = new DevEnv( $action_query, $admin_notice, $this->control, $mail_hog, $env );
+		$this->support_user = new SupportUser( $action_query, $asset, $admin_notice, $this->control, $env );
 	}
 
 	public function debug_log(): DebugLog {
@@ -262,6 +264,8 @@ class Setting extends Page {
 
 	public function add_default_options(): void {
 		parent::add_default_options();
+
+		$this->admin_notice->add_transient( __( 'TEST.', 'development-assistant' ), 'error' );
 
 		if ( ! in_array( get_option( static::ENABLE_WP_DEBUG_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option(

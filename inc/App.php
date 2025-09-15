@@ -2,6 +2,8 @@
 namespace WPDevAssist;
 
 use WPDevAssist\OmgCore\OmgApp;
+use WPDevAssist\OmgCore\Dependency;
+use WPDevAssist\OmgCore\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,37 +17,38 @@ class App extends OmgApp {
 
 	public function __construct() {
 		parent::__construct( ROOT_FILE, KEY );
+
+		$this->htaccess       = new Htaccess( $this->fs );
+		$this->mail_hog       = new MailHog( $this->action_query, $this->admin_notice );
+		$this->wp_debug       = new WPDebug( $this->admin_notice, $this->fs, $this->htaccess );
+		$this->setting        = new Setting(
+			$this->action_query,
+			$this->asset,
+			$this->fs,
+			$this->admin_notice,
+			$this->htaccess,
+			$this->mail_hog,
+			$this->wp_debug,
+			$this->env
+		);
+		$this->plugins_screen = new PluginsScreen(
+			$this->action_query,
+			$this->asset,
+			$this->admin_notice,
+			$this->setting
+		);
+		$this->assistant      = new Assistant(
+			$this->asset,
+			$this->action_query,
+			$this->setting,
+			$this->htaccess,
+			$this->mail_hog
+		);
 	}
 
 	protected function init(): callable {
 		return function (): void {
 			parent::init()();
-
-			$this->htaccess       = new Htaccess( $this->fs );
-			$this->mail_hog       = new MailHog( $this->action_query, $this->admin_notice );
-			$this->wp_debug       = new WPDebug( $this->admin_notice, $this->fs, $this->htaccess );
-			$this->setting        = new Setting(
-				$this->action_query,
-				$this->asset,
-				$this->fs,
-				$this->admin_notice,
-				$this->htaccess,
-				$this->mail_hog,
-				$this->wp_debug
-			);
-			$this->plugins_screen = new PluginsScreen(
-				$this->action_query,
-				$this->asset,
-				$this->admin_notice,
-				$this->setting
-			);
-			$this->assistant      = new Assistant(
-				$this->asset,
-				$this->action_query,
-				$this->setting,
-				$this->htaccess,
-				$this->mail_hog
-			);
 		};
 	}
 
@@ -79,7 +82,30 @@ class App extends OmgApp {
 		};
 	}
 
-	protected function get_config(): array {
-		return array();
+	protected function get_core_i18n(): callable {
+		return function (): array {
+			return array(
+				Dependency::class => array(
+					'notice_title_required_singular'      => __( 'The <b>%1$s</b> plugin%2$s is <b>required</b> for the <b>%3$s</b> features to function.', 'development-assistant' ),
+					'notice_title_optional_singular'      => __( 'The <b>%1$s</b> plugin%2$s is <b>recommended</b> for the all <b>%3$s</b> features to function.', 'development-assistant' ),
+					'notice_title_required_plural'        => __( 'The following plugins are <b>required</b> for the <b>%s"/b> features to function:', 'development-assistant' ),
+					'notice_title_optional_plural'        => __( 'The following plugins are <b>recommended</b> for the all <b>%s</b> features to function:', 'development-assistant' ),
+					'notice_item_not_installed'           => __( 'not installed', 'development-assistant' ),
+					'notice_item_undefiled_installation_url' => __( 'not installed, can\'t be installed automatically', 'development-assistant' ),
+					'notice_btn_activate'                 => __( 'Activate', 'development-assistant' ),
+					'notice_btn_install_and_activate'     => __( 'Install and activate', 'development-assistant' ),
+					'notice_btn_activate_only_required'   => __( 'Activate only required', 'development-assistant' ),
+					'notice_btn_install_and_activate_only_required' => __( 'Install and activate only required', 'development-assistant' ),
+					'notice_success_activate'             => __( 'Required plugin(s) activated.', 'development-assistant' ),
+					'notice_success_install_and_activate' => __( 'Required plugin(s) installed and activated.', 'development-assistant' ),
+					'notice_error_install'                => __( 'The "%1$s" plugin can\'t be installed automatically. Please install it manually.', 'development-assistant' ),
+				),
+				Logger::class     => array(
+					'notice_delete_log_error'         => __( 'An error occurred while trying to delete %s log file(s).', 'development-assistant' ),
+					'notice_delete_log_all_success'   => __( 'All %s log files have been successfully deleted.', 'development-assistant' ),
+					'notice_delete_log_group_success' => __( 'The %1$s %2$s log file has been successfully deleted.', 'development-assistant' ),
+				),
+			);
+		};
 	}
 }

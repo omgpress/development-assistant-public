@@ -7,6 +7,7 @@ use WPDevAssist\Model\ActionLink;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
 use WPDevAssist\OmgCore\Asset;
+use WPDevAssist\OmgCore\Env;
 use const WPDevAssist\KEY;
 
 class SupportUser extends Page {
@@ -44,18 +45,18 @@ class SupportUser extends Page {
 
 	protected ActionQuery $action_query;
 	protected Control $control;
-	protected DevEnv $dev_env;
+	protected Env $env;
 
 	public function __construct(
 		ActionQuery $action_query,
 		Asset $asset,
 		AdminNotice $admin_notice,
 		Control $control,
-		DevEnv $dev_env
+		Env $env
 	) {
 		$this->action_query = $action_query;
 		$this->control      = $control;
-		$this->dev_env      = $dev_env;
+		$this->env          = $env;
 
 		add_action( 'deleted_user', $this->delete_data_when_user_deleted() );
 
@@ -574,7 +575,7 @@ class SupportUser extends Page {
 		if ( ! in_array( get_option( static::ENABLE_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option(
 				static::ENABLE_KEY,
-				$this->dev_env->is_detected_dev_env() ? 'no' : 'yes'
+				$this->env->is_dev() ? 'no' : 'yes'
 			);
 		}
 	}

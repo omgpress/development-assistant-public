@@ -5,7 +5,19 @@ namespace WPDevAssist\OmgCore\Helper;
 defined('ABSPATH') || exit;
 trait TruncateHtmlContent
 {
-    protected function truncate_html_content(string $str, int $length = 100, array $args = array()): string
+    /**
+     * Truncates a string to a specified length, preserving HTML tags and entities.
+     *
+     * @param string $str The input string to truncate.
+     * @param int $length The maximum length of the truncated string.
+     * @param array $args Optional arguments for truncation:
+     *                    - 'ending': The string to append at the end (default: '...').
+     *                    - 'exact': Whether to truncate exactly at the specified length (default: false).
+     *                    - 'html': Whether the input string contains HTML (default: true).
+     *
+     * @return string The truncated string.
+     */
+    public function truncate_html_content(string $str, int $length = 100, array $args = array()): string
     {
         $args = wp_parse_args($args, array('ending' => '...', 'exact' => \false, 'html' => \true));
         if ($args['html']) {

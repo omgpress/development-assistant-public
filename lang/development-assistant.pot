@@ -22,6 +22,9 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-3: asset\n"
 "X-Poedit-SearchPathExcluded-4: node_modules\n"
 "X-Poedit-SearchPathExcluded-5: release\n"
+"X-Poedit-SearchPathExcluded-6: test\n"
+"X-Poedit-SearchPathExcluded-7: lib\n"
+"X-Poedit-SearchPathExcluded-8: tmp\n"
 
 #: inc/Assistant/SupportUser.php:21 inc/Setting/SupportUser.php:57
 msgid "Support User"

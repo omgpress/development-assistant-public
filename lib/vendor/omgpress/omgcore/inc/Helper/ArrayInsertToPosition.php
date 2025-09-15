@@ -5,7 +5,16 @@ namespace WPDevAssist\OmgCore\Helper;
 defined('ABSPATH') || exit;
 trait ArrayInsertToPosition
 {
-    protected function insert_to_position(array $array_for_insert, array $target_array, int $position): array
+    /**
+     * Inserts an array into a target array at a specified position.
+     *
+     * @param array $array_for_insert The array to insert.
+     * @param array $target_array The target array where the insertion will happen.
+     * @param int $position The position in the target array to insert the new array.
+     *
+     * @return array The modified target array with the new array inserted.
+     */
+    public function insert_to_position(array $array_for_insert, array $target_array, int $position): array
     {
         if (empty($target_array)) {
             return $array_for_insert;

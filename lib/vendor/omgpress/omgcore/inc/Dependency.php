@@ -2,11 +2,15 @@
 
 namespace WPDevAssist\OmgCore;
 
+use Exception;
 use InvalidArgumentException;
 use WPDevAssist\OmgCore\Dependency\Plugin;
 use WPDevAssist\OmgCore\Dependency\SilentUpgraderSkin;
 use WPDevAssist\Plugin_Upgrader;
 defined('ABSPATH') || exit;
+/**
+ * Dependency manager.
+ */
 class Dependency extends OmgFeature
 {
     protected Info $info;
@@ -17,24 +21,27 @@ class Dependency extends OmgFeature
      */
     protected array $plugins = array();
     protected string $install_and_activate_action_query_key;
-    protected string $notice_title_required_singular;
-    protected string $notice_title_optional_singular;
-    protected string $notice_title_required_plural;
-    protected string $notice_title_optional_plural;
-    protected string $notice_item_not_installed;
-    protected string $notice_item_undefiled_installation_url;
-    protected string $notice_btn_activate;
-    protected string $notice_btn_install_and_activate;
-    protected string $notice_btn_activate_only_required;
-    protected string $notice_btn_install_and_activate_only_required;
-    protected string $notice_success_activate;
-    protected string $notice_success_install_and_activate;
-    protected string $notice_error_install;
-    protected string $install_and_activate_action_capability;
-    protected array $config_props = array('notice_title_required_singular' => 'The <b>%1$s</b> plugin%2$s is <b>required</b> for the <b>"%3$s"</b> features to function.', 'notice_title_optional_singular' => 'The <b>%1$s</b> plugin%2$s is <b>recommended</b> for the all <b>"%3$s"</b> features to function.', 'notice_title_required_plural' => 'The following plugins are <b>required</b> for the <b>%s</b> features to function:', 'notice_title_optional_plural' => 'The following plugins are <b>recommended</b> for the all <b>%s</b> features to function:', 'notice_item_not_installed' => 'not installed', 'notice_item_undefiled_installation_url' => 'not installed, can\'t be installed automatically', 'notice_btn_activate' => 'Activate', 'notice_btn_install_and_activate' => 'Install and activate', 'notice_btn_activate_only_required' => 'Activate only required', 'notice_btn_install_and_activate_only_required' => 'Install and activate only required', 'notice_success_activate' => 'Required plugin(s) activated.', 'notice_success_install_and_activate' => 'Required plugins(s) installed and activated.', 'notice_error_install' => 'The "%1$s" plugin can\'t be installed automatically. Please install it manually.', 'install_and_activate_action_capability' => 'activate_plugins');
-    public function __construct(string $key, Info $info, AdminNotice $admin_notice, ActionQuery $action_query, array $config = array())
+    protected string $notice_title_required_singular = 'The <b>%1$s</b> plugin%2$s is <b>required</b> for the <b>"%3$s"</b> features to function.';
+    protected string $notice_title_optional_singular = 'The <b>%1$s</b> plugin%2$s is <b>recommended</b> for the all <b>"%3$s"</b> features to function.';
+    protected string $notice_title_required_plural = 'The following plugins are <b>required</b> for the <b>%s</b> features to function:';
+    protected string $notice_title_optional_plural = 'The following plugins are <b>recommended</b> for the all <b>%s</b> features to function:';
+    protected string $notice_item_not_installed = 'not installed';
+    protected string $notice_item_undefiled_installation_url = 'not installed, can\'t be installed automatically';
+    protected string $notice_btn_activate = 'Activate';
+    protected string $notice_btn_install_and_activate = 'Install and activate';
+    protected string $notice_btn_activate_only_required = 'Activate only required';
+    protected string $notice_btn_install_and_activate_only_required = 'Install and activate only required';
+    protected string $notice_success_activate = 'Required plugin(s) activated.';
+    protected string $notice_success_install_and_activate = 'Required plugins(s) installed and activated.';
+    protected string $notice_error_install = 'The "%1$s" plugin can\'t be installed automatically. Please install it manually.';
+    protected string $install_and_activate_action_capability = 'activate_plugins';
+    /**
+     * @throws Exception
+     * @ignore
+     */
+    public function __construct(string $key, Info $info, AdminNotice $admin_notice, ActionQuery $action_query, callable $get_config, callable $get_i18n)
     {
-        parent::__construct($config);
+        parent::__construct($get_config, $get_i18n);
         $this->info = $info;
         $this->admin_notice = $admin_notice;
         $this->action_query = $action_query;
@@ -42,16 +49,32 @@ class Dependency extends OmgFeature
         $action_query->add($this->install_and_activate_action_query_key, $this->handle_install_and_activate_plugins(), \true, $this->install_and_activate_action_capability);
     }
     /**
-     * @param string|array $filename
+     * Registers a plugin dependency.
+     *
+     * @param string $key Unique key for the plugin.
+     * @param string $name Name of the plugin.
+     * @param string|array $filename Path(s) to the plugin file.
+     * @param bool $is_optional Whether the plugin is optional.
+     * @param string|null $installation_url URL to install the plugin, if applicable.
+     *
+     * @return self
+     * @throws InvalidArgumentException If a plugin with the same key is already declared.
      */
     public function require_plugin(string $key, string $name, $filename, bool $is_optional = \false, ?string $installation_url = null): self
     {
         if (isset($this->plugins[$key])) {
-            throw new InvalidArgumentException(esc_html("Dependency plugin with key \"{$key}\" already declared"));
+            throw new InvalidArgumentException(esc_html("Dependency plugin with key {$key} already declared"));
         }
         $this->plugins[$key] = new Plugin($key, $name, $filename, $is_optional, $installation_url);
         return $this;
     }
+    /**
+     * Checks if all required plugins are active.
+     *
+     * @param bool $inc_optional Whether to include optional plugins in the check.
+     *
+     * @return bool True if all required plugins are active, false otherwise.
+     */
     public function is_active_all_plugins(bool $inc_optional = \false): bool
     {
         foreach ($this->plugins as $key => $plugin) {
@@ -64,14 +87,35 @@ class Dependency extends OmgFeature
         }
         return \true;
     }
+    /**
+     * Checks if a specific plugin is active.
+     *
+     * @param string $key The key of the plugin to check.
+     *
+     * @return bool True if the plugin is active, false otherwise.
+     * @throws InvalidArgumentException If the plugin with the specified key is not found.
+     */
     public function is_active_plugin(string $key): bool
     {
         return $this->get_plugin($key)->is_active();
     }
+    /**
+     * Checks if a specific plugin is installed.
+     *
+     * @param string $key The key of the plugin to check.
+     *
+     * @return bool True if the plugin is installed, false otherwise.
+     * @throws InvalidArgumentException If the plugin with the specified key is not found.
+     */
     public function is_installed_plugin(string $key): bool
     {
         return $this->get_plugin($key)->is_installed();
     }
+    /**
+     * Render a notice if there are any required or optional plugins not active.
+     *
+     * @param bool $inc_optional Optional. Whether to include optional plugins in the notice.
+     */
     public function maybe_render_notice(bool $inc_optional = \true): void
     {
         if (empty($this->plugins)) {
@@ -265,7 +309,7 @@ class Dependency extends OmgFeature
     protected function get_plugin(string $key): Plugin
     {
         if (empty($this->plugins[$key])) {
-            throw new InvalidArgumentException(esc_html("Dependency plugin with key \"{$key}\" not found"));
+            throw new InvalidArgumentException(esc_html("Dependency plugin with key {$key} not found"));
         }
         return $this->plugins[$key];
     }

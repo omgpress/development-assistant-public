@@ -2,14 +2,22 @@
 
 namespace WPDevAssist\OmgCore;
 
+use Exception;
 defined('ABSPATH') || exit;
+/**
+ * @ignore
+ */
 class ViewPlugin extends View
 {
     protected Fs $fs;
     protected string $dir;
-    public function __construct(Fs $fs, array $config = array())
+    /**
+     * @throws Exception
+     * @ignore
+     */
+    public function __construct(Fs $fs, callable $get_config)
     {
-        parent::__construct($config);
+        parent::__construct($get_config);
         $this->fs = $fs;
     }
     public function get(string $name, array $args = array()): string

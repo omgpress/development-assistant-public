@@ -3,6 +3,9 @@
 namespace WPDevAssist\OmgCore;
 
 defined('ABSPATH') || exit;
+/**
+ * @ignore
+ */
 class FsTheme extends Fs
 {
     public function get_url(string $rel = '', bool $stamp = \false): string

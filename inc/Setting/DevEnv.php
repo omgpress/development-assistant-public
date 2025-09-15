@@ -4,6 +4,7 @@ namespace WPDevAssist\Setting;
 use WPDevAssist\MailHog;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
+use WPDevAssist\OmgCore\Env;
 use WPDevAssist\Setting;
 use const WPDevAssist\KEY;
 
@@ -47,11 +48,19 @@ class DevEnv extends Tab {
 	protected AdminNotice $admin_notice;
 	protected Control $control;
 	protected MailHog $mail_hog;
+	protected Env $env;
 
-	public function __construct( ActionQuery $action_query, AdminNotice $admin_notice, Control $control, MailHog $mail_hog ) {
+	public function __construct(
+		ActionQuery $action_query,
+		AdminNotice $admin_notice,
+		Control $control,
+		MailHog $mail_hog,
+		Env $env
+	) {
 		$this->action_query = $action_query;
 		$this->control      = $control;
 		$this->mail_hog     = $mail_hog;
+		$this->env          = $env;
 
 		parent::__construct( $admin_notice );
 		$action_query->add( static::REDIRECT_TO_MAIL_HOG_QUERY_KEY, $this->handle_redirect_to_mail_hog() );
@@ -174,18 +183,10 @@ class DevEnv extends Tab {
 	}
 
 	public function add_default_options(): void {
-		if ( $this->is_detected_dev_env() && ! in_array( get_option( static::ENABLE_KEY ), array( 'yes', 'no' ), true ) ) {
+		$this->admin_notice->add_transient( __( 'TEST', 'development-assistant' ), 'error' );
+		if ( $this->env->is_dev() && ! in_array( get_option( static::ENABLE_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option( static::ENABLE_KEY, 'yes' );
 		}
-	}
-
-	public function is_detected_dev_env(): bool {
-		$host      = explode( '.', wp_parse_url( home_url(), PHP_URL_HOST ) );
-		$root_host = end( $host );
-
-		return in_array( $root_host, static::DEV_HOSTS, true ) ||
-			in_array( wp_get_environment_type(), static::DEV_ENVS, true ) ||
-			( defined( 'WP_ENVIRONMENT' ) && in_array( WP_ENVIRONMENT, static::DEV_ENVS, true ) );
 	}
 
 	public function handle_redirect_to_mail_hog(): callable {
