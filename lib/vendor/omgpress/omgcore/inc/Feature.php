@@ -8,7 +8,7 @@ defined('ABSPATH') || exit;
 /**
  * Feature.
  */
-abstract class OmgFeature
+abstract class Feature
 {
     protected static array $initiated = array();
     protected array $config = array();

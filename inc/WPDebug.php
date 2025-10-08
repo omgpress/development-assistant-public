@@ -3,12 +3,12 @@ namespace WPDevAssist;
 
 use Exception;
 use WPDevAssist\OmgCore\AdminNotice;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 use WPDevAssist\OmgCore\Fs;
 
 defined( 'ABSPATH' ) || exit;
 
-class WPDebug extends OmgFeature {
+class WPDebug extends Feature {
 	protected const CONFIG_FILE_PATH               = ABSPATH . 'wp-config.php';
 	protected const ORIGINAL_DEBUG_VALUE_KEY       = KEY . '_original_wp_debug_value';
 	protected const ORIGINAL_DEBUG_VALUE_DEFAULT   = 'disabled';

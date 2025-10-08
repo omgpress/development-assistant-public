@@ -1,11 +1,11 @@
 <?php
 namespace WPDevAssist\Assistant;
 
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 
 defined( 'ABSPATH' ) || exit;
 
-abstract class Section extends OmgFeature {
+abstract class Section extends Feature {
 	protected string $title              = '';
 	protected string $content            = '';
 	protected string $status_level       = 'success';

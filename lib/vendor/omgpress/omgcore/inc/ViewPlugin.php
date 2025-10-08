@@ -10,7 +10,6 @@ defined('ABSPATH') || exit;
 class ViewPlugin extends View
 {
     protected Fs $fs;
-    protected string $dir;
     /**
      * @throws Exception
      * @ignore

@@ -11,15 +11,15 @@ defined('ABSPATH') || exit;
 /**
  * Dependency manager.
  */
-class Dependency extends OmgFeature
+class Dependency extends Feature
 {
-    protected Info $info;
-    protected AdminNotice $admin_notice;
-    protected ActionQuery $action_query;
     /**
      * @var Plugin[]
      */
     protected array $plugins = array();
+    protected ActionQuery $action_query;
+    protected AdminNotice $admin_notice;
+    protected Info $info;
     protected string $install_and_activate_action_query_key;
     protected string $notice_title_required_singular = 'The <b>%1$s</b> plugin%2$s is <b>required</b> for the <b>"%3$s"</b> features to function.';
     protected string $notice_title_optional_singular = 'The <b>%1$s</b> plugin%2$s is <b>recommended</b> for the all <b>"%3$s"</b> features to function.';
@@ -39,12 +39,12 @@ class Dependency extends OmgFeature
      * @throws Exception
      * @ignore
      */
-    public function __construct(string $key, Info $info, AdminNotice $admin_notice, ActionQuery $action_query, callable $get_config, callable $get_i18n)
+    public function __construct(string $key, ActionQuery $action_query, AdminNotice $admin_notice, Info $info, callable $get_config, callable $get_i18n)
     {
         parent::__construct($get_config, $get_i18n);
-        $this->info = $info;
-        $this->admin_notice = $admin_notice;
         $this->action_query = $action_query;
+        $this->admin_notice = $admin_notice;
+        $this->info = $info;
         $this->install_and_activate_action_query_key = "{$key}_omg_core_dependency_install_and_activate_plugins";
         $action_query->add($this->install_and_activate_action_query_key, $this->handle_install_and_activate_plugins(), \true, $this->install_and_activate_action_capability);
     }

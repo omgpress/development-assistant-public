@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * File system manager.
  */
-abstract class Fs extends OmgFeature
+abstract class Fs extends Feature
 {
     /**
      * Returns the URL to a plugin or theme file.

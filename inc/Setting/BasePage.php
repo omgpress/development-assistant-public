@@ -2,11 +2,11 @@
 namespace WPDevAssist\Setting;
 
 use WPDevAssist\OmgCore\AdminNotice;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 
 defined( 'ABSPATH' ) || exit;
 
-abstract class BasePage extends OmgFeature {
+abstract class BasePage extends Feature {
 	public const KEY = '';
 
 	protected const SETTING_KEYS = array();

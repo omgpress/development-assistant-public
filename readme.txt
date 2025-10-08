@@ -1,6 +1,6 @@
 === Development Assistant ===
 
-Stable tag: 1.2.9
+Stable tag: 1.2.10
 Contributors: omgpress
 Requires PHP: 7.4.0
 Requires at least: 5.0.0
@@ -29,6 +29,9 @@ Development Assistant is a comprehensive toolkit designed to streamline the deve
 Development Assistant is your go-to solution for simplifying WordPress development tasks and enhancing support capabilities. Whether you're troubleshooting intricate issues or optimizing your development workflow, this plugin equips you with the tools you need for success.
 
 == Changelog ==
+
+= 1.2.10 =
+- Minor fixes
 
 = 1.2.9 =
 - Fixed plugin activation logic (hook was used too late, preventing logic from executing)

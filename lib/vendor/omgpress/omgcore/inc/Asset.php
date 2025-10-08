@@ -7,18 +7,14 @@ defined('ABSPATH') || exit;
 /**
  * Asset manager.
  */
-class Asset extends OmgFeature
+class Asset extends Feature
 {
+    protected string $key;
+    protected Fs $fs;
     protected string $asset_dir = 'asset';
     protected string $js_dir = 'js';
     protected string $css_dir = 'css';
     protected string $postfix = '.min';
-    protected string $key;
-    protected Fs $fs;
-    /**
-     * @throws Exception
-     * @ignore
-     */
     public function __construct(string $key, Fs $fs, callable $get_config)
     {
         parent::__construct($get_config);
@@ -64,7 +60,7 @@ class Asset extends OmgFeature
      */
     public function enqueue_inline_script(string $parent_name, string $js_code, string $position = 'after'): self
     {
-        wp_add_inline_script($this->key . "_{$parent_name}", $js_code, $position);
+        wp_add_inline_script($this->get_key($parent_name), $js_code, $position);
         return $this;
     }
     /**
@@ -93,7 +89,7 @@ class Asset extends OmgFeature
         } elseif (is_array($addition)) {
             $css_vars = ':root{';
             foreach ($addition as $var_name => $var_val) {
-                $css_vars .= '--' . str_replace('_', '-', $this->key . "_{$var_name}") . ':' . $var_val . ';';
+                $css_vars .= '--' . str_replace('_', '-', "{$this->key}-{$var_name}") . ":{$var_val};";
             }
             wp_add_inline_style($key, "{$css_vars}}");
         } elseif (!is_null($addition)) {
@@ -139,6 +135,6 @@ class Asset extends OmgFeature
      */
     public function get_key(string $name): string
     {
-        return $this->key . '_' . str_replace('-', '_', $name);
+        return "{$this->key}_" . str_replace('-', '_', $name);
     }
 }

@@ -10,10 +10,6 @@ defined('ABSPATH') || exit;
 class FsPlugin extends Fs
 {
     protected string $root_file;
-    /**
-     * @throws Exception
-     * @ignore
-     */
     public function __construct(string $root_file)
     {
         parent::__construct();

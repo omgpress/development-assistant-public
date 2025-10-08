@@ -3,13 +3,13 @@ namespace WPDevAssist\PluginsScreen;
 
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 use const WPDevAssist\KEY;
 use const WPDevAssist\ROOT_FILE;
 
 defined( 'ABSPATH' ) || exit;
 
-class ActivationManager extends OmgFeature {
+class ActivationManager extends Feature {
 	public const DEACTIVATION_RESET_QUERY_KEY = KEY . '_deactivation_reset';
 	public const DEACTIVATED_KEY              = KEY . '_temporarily_deactivated_plugins';
 

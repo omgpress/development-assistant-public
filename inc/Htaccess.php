@@ -1,12 +1,12 @@
 <?php
 namespace WPDevAssist;
 
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 use WPDevAssist\OmgCore\Fs;
 
 defined( 'ABSPATH' ) || exit;
 
-class Htaccess extends OmgFeature {
+class Htaccess extends Feature {
 	protected const PATH = ABSPATH . '.htaccess';
 
 	protected Fs $fs;

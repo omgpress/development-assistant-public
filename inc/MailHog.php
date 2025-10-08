@@ -4,11 +4,11 @@ namespace WPDevAssist;
 use PHPMailer;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 
 defined( 'ABSPATH' ) || exit;
 
-class MailHog extends OmgFeature {
+class MailHog extends Feature {
 	public const SEND_TEST_EMAIL_QUERY_KEY = KEY . '_mail_hog_send_test_email';
 
 	protected AdminNotice $admin_notice;

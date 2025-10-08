@@ -3,7 +3,7 @@ namespace WPDevAssist\PluginsScreen;
 
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 use ZipArchive;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
@@ -11,7 +11,7 @@ use const WPDevAssist\KEY;
 
 defined( 'ABSPATH' ) || exit;
 
-class Downloader extends OmgFeature {
+class Downloader extends Feature {
 	protected const DOWNLOAD_QUERY_KEY = KEY . '_download_plugin';
 
 	protected ActionQuery $action_query;

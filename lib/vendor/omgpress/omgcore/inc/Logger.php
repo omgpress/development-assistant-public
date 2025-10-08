@@ -9,12 +9,13 @@ defined('ABSPATH') || exit;
 /**
  * Logger.
  */
-class Logger extends OmgFeature
+class Logger extends Feature
 {
-    protected Fs $fs;
     protected ActionQuery $action_query;
     protected AdminNotice $admin_notice;
+    protected Fs $fs;
     protected Info $info;
+    protected string $dir;
     protected string $dir_path;
     protected string $enabled_option_key;
     protected string $delete_log_query_key;
@@ -29,12 +30,12 @@ class Logger extends OmgFeature
      * @throws Exception
      * @ignore
      */
-    public function __construct(string $key, Fs $fs, ActionQuery $action_query, AdminNotice $admin_notice, Info $info, callable $get_config, callable $get_i18n)
+    public function __construct(string $key, ActionQuery $action_query, AdminNotice $admin_notice, Fs $fs, Info $info, callable $get_config, callable $get_i18n)
     {
         parent::__construct($get_config, $get_i18n);
-        $this->fs = $fs;
         $this->action_query = $action_query;
         $this->admin_notice = $admin_notice;
+        $this->fs = $fs;
         $this->info = $info;
         $this->dir_path = WP_CONTENT_DIR . '/uploads/' . str_replace('_', '-', $key) . '-log';
         $this->enabled_option_key = "{$key}_omg_core_logger_enabled";

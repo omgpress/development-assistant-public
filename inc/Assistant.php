@@ -4,11 +4,11 @@ namespace WPDevAssist;
 use Exception;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\Asset;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 
 defined( 'ABSPATH' ) || exit;
 
-class Assistant extends OmgFeature {
+class Assistant extends Feature {
 	public const TITLE_HOOK = KEY . '_assistant_panel_title';
 
 	protected Asset $asset;

@@ -265,8 +265,6 @@ class Setting extends Page {
 	public function add_default_options(): void {
 		parent::add_default_options();
 
-		$this->admin_notice->add_transient( __( 'TEST.', 'development-assistant' ), 'error' );
-
 		if ( ! in_array( get_option( static::ENABLE_WP_DEBUG_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option(
 				static::ENABLE_WP_DEBUG_KEY,

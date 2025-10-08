@@ -1,13 +1,13 @@
 <?php
 namespace WPDevAssist;
 
-use WPDevAssist\OmgCore\OmgApp;
+use WPDevAssist\OmgCore\Core;
 use WPDevAssist\OmgCore\Dependency;
 use WPDevAssist\OmgCore\Logger;
 
 defined( 'ABSPATH' ) || exit;
 
-class App extends OmgApp {
+class App extends Core {
 	protected Assistant $assistant;
 	protected Htaccess $htaccess;
 	protected MailHog $mail_hog;

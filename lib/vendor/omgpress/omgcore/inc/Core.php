@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
 /**
  * Application.
  */
-abstract class OmgApp
+abstract class Core
 {
     protected string $root_file;
     protected string $key;
@@ -51,12 +51,12 @@ abstract class OmgApp
         $this->is_plugin = $is_plugin;
         $this->action_query = new ActionQuery();
         $this->admin_notice = new AdminNotice($this->key);
-        $this->fs = $this->is_plugin ? new FsPlugin($this->root_file) : new FsTheme();
+        $this->fs = $this->is_plugin ? new FsPlugin($root_file) : new FsTheme();
         $this->asset = new Asset($this->key, $this->fs, $this->get_core_config());
         $this->info = $this->is_plugin ? new InfoPlugin($this->root_file) : new InfoTheme($this->fs->get_path('style.css'));
-        $this->dependency = new Dependency($this->key, $this->info, $this->admin_notice, $this->action_query, $this->get_core_config(), $this->get_core_i18n());
+        $this->dependency = new Dependency($this->key, $this->action_query, $this->admin_notice, $this->info, $this->get_core_config(), $this->get_core_i18n());
         $this->env = new Env();
-        $this->logger = new Logger($this->key, $this->fs, $this->action_query, $this->admin_notice, $this->info, $this->get_core_config(), $this->get_core_i18n());
+        $this->logger = new Logger($root_file, $this->action_query, $this->admin_notice, $this->fs, $this->info, $this->get_core_config(), $this->get_core_i18n());
         $this->view = $this->is_plugin ? new ViewPlugin($this->fs, $this->get_core_config()) : new ViewTheme($this->get_core_config());
         if ($this->is_plugin) {
             register_activation_hook($this->root_file, $this->activate());
@@ -66,6 +66,41 @@ abstract class OmgApp
             add_action('switch_theme', $this->deactivate());
         }
         add_action('init', $this->init());
+    }
+    /**
+     * Return ActionQuery class instance.
+     */
+    public function action_query(): ActionQuery
+    {
+        return $this->action_query;
+    }
+    /**
+     * Return AdminNotice class instance.
+     */
+    public function admin_notice(): AdminNotice
+    {
+        return $this->admin_notice;
+    }
+    /**
+     * Return Asset class instance.
+     */
+    public function asset(): Asset
+    {
+        return $this->asset;
+    }
+    /**
+     * Return Dependency class instance.
+     */
+    public function dependency(): Dependency
+    {
+        return $this->dependency;
+    }
+    /**
+     * Return Env class instance.
+     */
+    public function env(): Env
+    {
+        return $this->env;
     }
     /**
      * Return Fs class instance.

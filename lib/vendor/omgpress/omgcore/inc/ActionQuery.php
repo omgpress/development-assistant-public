@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * Action Query manager.
  */
-class ActionQuery extends OmgFeature
+class ActionQuery extends Feature
 {
     /**
      * Adds a query action handler.

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit645c7dcb951932fd949f7939acb0cb65
+class ComposerStaticInitff387d8c43f44967b80dd017d450dd7b
 {
     public static $prefixLengthsPsr4 = array (
         'W' => 
@@ -35,10 +35,12 @@ class ComposerStaticInit645c7dcb951932fd949f7939acb0cb65
         'WPDevAssist\\OmgCore\\ActionQuery' => __DIR__ . '/..' . '/omgpress/omgcore/inc/ActionQuery.php',
         'WPDevAssist\\OmgCore\\AdminNotice' => __DIR__ . '/..' . '/omgpress/omgcore/inc/AdminNotice.php',
         'WPDevAssist\\OmgCore\\Asset' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Asset.php',
+        'WPDevAssist\\OmgCore\\Core' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Core.php',
         'WPDevAssist\\OmgCore\\Dependency' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Dependency.php',
         'WPDevAssist\\OmgCore\\Dependency\\Plugin' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Dependency/Plugin.php',
         'WPDevAssist\\OmgCore\\Dependency\\SilentUpgraderSkin' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Dependency/SilentUpgraderSkin.php',
         'WPDevAssist\\OmgCore\\Env' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Env.php',
+        'WPDevAssist\\OmgCore\\Feature' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Feature.php',
         'WPDevAssist\\OmgCore\\Fs' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Fs.php',
         'WPDevAssist\\OmgCore\\FsPlugin' => __DIR__ . '/..' . '/omgpress/omgcore/inc/FsPlugin.php',
         'WPDevAssist\\OmgCore\\FsTheme' => __DIR__ . '/..' . '/omgpress/omgcore/inc/FsTheme.php',
@@ -51,8 +53,6 @@ class ComposerStaticInit645c7dcb951932fd949f7939acb0cb65
         'WPDevAssist\\OmgCore\\InfoPlugin' => __DIR__ . '/..' . '/omgpress/omgcore/inc/InfoPlugin.php',
         'WPDevAssist\\OmgCore\\InfoTheme' => __DIR__ . '/..' . '/omgpress/omgcore/inc/InfoTheme.php',
         'WPDevAssist\\OmgCore\\Logger' => __DIR__ . '/..' . '/omgpress/omgcore/inc/Logger.php',
-        'WPDevAssist\\OmgCore\\OmgApp' => __DIR__ . '/..' . '/omgpress/omgcore/inc/OmgApp.php',
-        'WPDevAssist\\OmgCore\\OmgFeature' => __DIR__ . '/..' . '/omgpress/omgcore/inc/OmgFeature.php',
         'WPDevAssist\\OmgCore\\View' => __DIR__ . '/..' . '/omgpress/omgcore/inc/View.php',
         'WPDevAssist\\OmgCore\\ViewPlugin' => __DIR__ . '/..' . '/omgpress/omgcore/inc/ViewPlugin.php',
         'WPDevAssist\\OmgCore\\ViewTheme' => __DIR__ . '/..' . '/omgpress/omgcore/inc/ViewTheme.php',
@@ -73,9 +73,9 @@ class ComposerStaticInit645c7dcb951932fd949f7939acb0cb65
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit645c7dcb951932fd949f7939acb0cb65::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit645c7dcb951932fd949f7939acb0cb65::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit645c7dcb951932fd949f7939acb0cb65::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitff387d8c43f44967b80dd017d450dd7b::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitff387d8c43f44967b80dd017d450dd7b::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitff387d8c43f44967b80dd017d450dd7b::$classMap;
 
         }, null, ClassLoader::class);
     }

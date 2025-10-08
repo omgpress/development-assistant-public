@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 /**
  * View manager.
  */
-abstract class View extends OmgFeature
+abstract class View extends Feature
 {
     protected string $dir = 'view';
     /**

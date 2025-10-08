@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
 /**
  * Plugin or theme information.
  */
-abstract class Info extends OmgFeature
+abstract class Info extends Feature
 {
     protected string $name;
     protected string $url;

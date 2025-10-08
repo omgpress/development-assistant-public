@@ -3,9 +3,9 @@
  * Plugin Name: Development Assistant
  * Plugin URI: https://omgpress.com/development-assistant
  * Description: Toolkit for debugging and customer support.
- * Version: 1.2.9
+ * Version: 1.2.10
  * Text Domain: development-assistant
- * Author: OmgPress
+ * Author: OMG!PRESS
  * Author URI: https://omgpress.com
  * Requires PHP: 7.4.0
  * Requires at least: 5.0.0

@@ -4,13 +4,13 @@ namespace WPDevAssist;
 use WPDevAssist\OmgCore\ActionQuery;
 use WPDevAssist\OmgCore\AdminNotice;
 use WPDevAssist\OmgCore\Asset;
-use WPDevAssist\OmgCore\OmgFeature;
+use WPDevAssist\OmgCore\Feature;
 use WPDevAssist\PluginsScreen\ActivationManager;
 use WPDevAssist\PluginsScreen\Downloader;
 
 defined( 'ABSPATH' ) || exit;
 
-class PluginsScreen extends OmgFeature {
+class PluginsScreen extends Feature {
 	protected const COLUMN_KEY = KEY . '_dev_actions';
 
 	protected ActionQuery $action_query;

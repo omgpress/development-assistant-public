@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
 /**
  * Admin notice manager.
  */
-class AdminNotice extends OmgFeature
+class AdminNotice extends Feature
 {
     protected string $key;
     /**

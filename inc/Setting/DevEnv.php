@@ -183,7 +183,6 @@ class DevEnv extends Tab {
 	}
 
 	public function add_default_options(): void {
-		$this->admin_notice->add_transient( __( 'TEST', 'development-assistant' ), 'error' );
 		if ( $this->env->is_dev() && ! in_array( get_option( static::ENABLE_KEY ), array( 'yes', 'no' ), true ) ) {
 			update_option( static::ENABLE_KEY, 'yes' );
 		}
